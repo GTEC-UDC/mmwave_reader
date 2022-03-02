@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package>
+  <name>gtec_mmwave_reader</name>
+  <version>1.0.0</version>
+  <description>The gtec_mmwave_reader package</description>
+
+  <maintainer email="valentin.barral@udc.es">Valentin Barral</maintainer>
+
+  <license>MIT</license>
+
+
+  <build_depend>std_msgs</build_depend>
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>sensor_msgs</build_depend>
+  <build_depend>radar_msgs</build_depend>
+  <run_depend>message_runtime</run_depend>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rospy</build_depend>
+
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>sensor_msgs</run_depend>
+  <run_depend>radar_msgs</run_depend>
+  <export>
+
+  </export>
+</package>

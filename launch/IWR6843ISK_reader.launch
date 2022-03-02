@@ -1,0 +1,18 @@
+<launch>
+    <arg default="/dev/ttyUSB0" name="uart_port"></arg>
+    <arg default="/dev/ttyUSB1" name="data_port"></arg>
+    <arg default="/home/valba/ti/mmwave_industrial_toolbox_4_9_0/labs/people_counting/visualizer/chirp_configs/3D_People_Counting/ISK_6m_default.cfg" name="config_file_path"></arg>
+    
+    <arg default="/gtec/mmwave/radar" name="publish_radar_topic"></arg>
+    <arg default="/gtec/mmwave/cloud" name="publish_cloud_topic"></arg>
+    <arg default="/gtec/mmwave/target" name="publish_target_topic"></arg>
+
+    <node name="IWR6843ISKReader" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_reader.py">
+        <param name="uart_port" value="$(arg uart_port)"></param>
+        <param name="data_port" value="$(arg data_port)"></param>
+        <param name="config_file_path" value="$(arg config_file_path)"></param>
+        <param name="publish_radar_topic" value="$(arg publish_radar_topic)"></param>
+        <param name="publish_cloud_topic" value="$(arg publish_cloud_topic)"></param>
+        <param name="publish_target_topic" value="$(arg publish_target_topic)"></param>
+    </node>
+</launch>
