@@ -1,0 +1,46 @@
+<launch>
+    <arg default="/dev/ttyUSB0" name="uart_port"></arg>
+    <arg default="/dev/ttyUSB1" name="data_port"></arg>
+    <arg default="/home/valba/Trabajo/GTEC/Research/ConfigsRadar/profile_doppler.cfg" name="config_file_path"></arg>
+    
+    <arg default="/gtec/mmwave/radar_cube" name="publish_radar_cube_topic"></arg>
+    <arg default="/gtec/mmwave/radar_range_azimuth" name="publish_radar_range_azimuth_topic"></arg>
+    <arg default="/gtec/mmwave/radar_range_doppler" name="publish_radar_range_doppler_topic"></arg>
+    <arg default="/gtec/mmwave/cloud" name="publish_cloud_topic"></arg>
+
+    <arg default="/gtec/mmwave/lidar" name="publish_lidar_topic"></arg>
+
+
+    <arg default="0" name="radar_pos_x"></arg>
+    <arg default="0" name="radar_pos_y"></arg>
+    <arg default="0" name="radar_pos_z"></arg>
+    <arg default="0" name="radar_yaw"></arg>
+    <arg default="0" name="radar_pitch"></arg>
+    <arg default="0" name="radar_roll"></arg>
+
+    <node pkg="tf" 
+        type="static_transform_publisher" 
+        name="odom_to_radar" 
+        args="$(arg radar_pos_x) $(arg radar_pos_y) $(arg radar_pos_z) $(arg radar_yaw) $(arg radar_pitch) $(arg radar_roll) odom radar 30" />
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 30" />
+
+    <node pkg="pose_publisher" type="pose_publisher" name="radar_pose">
+            <param name="map_frame" value="odom"></param>
+            <param name="base_frame" value="radar"></param>
+    </node>
+
+    <node name="IWR6843ISKReaderOutOfBox" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_out_of_box_reader.py">
+        <param name="uart_port" value="$(arg uart_port)"></param>
+        <param name="data_port" value="$(arg data_port)"></param>
+        <param name="config_file_path" value="$(arg config_file_path)"></param>
+        <param name="publish_radar_cube_topic" value="$(arg publish_radar_cube_topic)"></param>
+        <param name="publish_cloud_topic" value="$(arg publish_cloud_topic)"></param>
+        <param name="publish_radar_range_azimuth_topic" value="$(arg publish_radar_range_azimuth_topic)"></param>
+        <param name="publish_radar_range_doppler_topic" value="$(arg publish_radar_range_doppler_topic)"></param>
+    </node>
+
+    <node name="IWR6843ISKToLidar" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_to_lidar.py">
+        <param name="radar_cube_topic" value="$(arg publish_radar_cube_topic)"></param>
+        <param name="publish_lidar_topic" value="$(arg publish_lidar_topic)"></param>
+    </node>
+</launch>

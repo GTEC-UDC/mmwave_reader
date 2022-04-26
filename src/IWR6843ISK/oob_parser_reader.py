@@ -19,7 +19,7 @@ from operator import add
 # Default is (f). Once initialize, call connectComPorts(self, UartComPort, DataComPort) to connect to device com ports.
 # Then call readAndParseUart() to read one frame of data from the device. The gui this is packaged with calls this every frame period.
 # readAndParseUart() will return all radar detection and tracking information.
-class uartParserSDK():
+class uartParserSDKReader():
     def __init__(self,type='(Legacy) 2D People Counting'):
         self.headerLength = 52
         self.magicWord = 0x708050603040102
@@ -405,13 +405,13 @@ class uartParserSDK():
                 self.rangeFFT.append(fftValues)
                     
 
-                fft_result = fft.transform(complex_values, False)
-                real_result = [0] * NUM_ANGLE_BINS
-                for ri in range(NUM_ANGLE_BINS):
-                    cx = fft_result[ri]
-                    real_result[ri] = math.sqrt(cx.real * cx.real + cx.imag * cx.imag)
+                # fft_result = fft.transform(complex_values, False)
+                # real_result = [0] * NUM_ANGLE_BINS
+                # for ri in range(NUM_ANGLE_BINS):
+                #     cx = fft_result[ri]
+                #     real_result[ri] = math.sqrt(cx.real * cx.real + cx.imag * cx.imag)
 
-                QQ.append(real_result[33:] + real_result[0:32])
+                # QQ.append(real_result[33:] + real_result[0:32])
             fliplrQQ = []
 
             for tmpr in range(len(QQ)):
@@ -649,79 +649,65 @@ class uartParserSDK():
         return data
 
     #parsing for SDK 3.x Point Cloud
-    def sdk3xTLVHeader(self, dataIn, numTLVs, tlvHeaderLength, numDetectedObj):
-        # headerStruct = 'Q8I'
-        # headerLength = struct.calcsize(headerStruct)
-        # headerLength = struct.calcsize(headerStruct)
-        # tlvHeaderLength = 8
-        # try:
-        #     magic, version, totalPacketLen, platform, self.frameNum, timeCPUCycles, self.numDetectedObj, numTLVs, subFrameNum = struct.unpack(headerStruct, dataIn[:headerLength])
-        # except:
-        #     #bad data, return
-        #     self.fail = 1
-        #     return dataIn
-
-
-
-        # #reset point buffers
-        # self.pcBufPing = np.zeros((5,self.maxPoints))
-        # headerStruct = 'Q8I'
-        # headerLength = struct.calcsize(headerStruct)
-        # tlvHeaderLength = 8
-        # #search until we find magic word
-        # while(1):
-        #     try:
-        #         magic, version, totalPacketLen, platform, self.frameNum, timeCPUCycles, self.numDetectedObj, numTLVs, subFrameNum = struct.unpack(headerStruct, dataIn[:headerLength])
+    def sdk3xTLVHeader(self, dataIn):
+        #reset point buffers
+        self.pcBufPing = np.zeros((5,self.maxPoints))
+        headerStruct = 'Q8I'
+        headerLength = struct.calcsize(headerStruct)
+        tlvHeaderLength = 8
+        #search until we find magic word
+        while(1):
+            try:
+                magic, version, totalPacketLen, platform, self.frameNum, timeCPUCycles, numDetectedObj, numTLVs, subFrameNum = struct.unpack(headerStruct, dataIn[:headerLength])
                 
-        #     except:
-        #         #bad data, return
-        #         self.fail = 1
-        #         return dataIn
-        #     if (magic != self.magicWord):
-        #         #wrong magic word, increment pointer by 1 and try again
-        #         dataIn = dataIn[1:]
-        #     else:
-        #         #we have correct magic word, proceed to parse rest of data
-        #         break
-        # print('Total Packet length: %d numTLVs: %d'%(totalPacketLen, numTLVs))
-        # #print('HeaderLength: %d'%(headerLength))
-        # dataIn = dataIn[headerLength:]
-        # remainingData = totalPacketLen - len(dataIn)
-        # #print('Total Packet length (without header): %d'%(remainingData))
-        # count = 0
-        # #check to ensure we have all of the data
-        # while (remainingData > 0):
-        #     newData = self.dataCom.read(remainingData)
-        #     remainingData = totalPacketLen - len(dataIn) - len(newData)
-        #     dataIn += newData
-        #     count += 1
-        #     if (self.saveBinary):
-        #         self.oldData += newData
-        # #now check TLVs
-        #print ('got tlvs sdk3x')
+            except:
+                #bad data, return
+                self.fail = 1
+                return dataIn,0,0,0
+            if (magic != self.magicWord):
+                #wrong magic word, increment pointer by 1 and try again
+                dataIn = dataIn[1:]
+            else:
+                #we have correct magic word, proceed to parse rest of data
+                break
+        #print('Total Packet length: %d numTLVs: %d'%(totalPacketLen, numTLVs))
+        #print('HeaderLength: %d'%(headerLength))
+        dataIn = dataIn[headerLength:]
+        remainingData = totalPacketLen - len(dataIn)
+        #print('Total Packet length (without header): %d'%(remainingData))
+        count = 0
+        #check to ensure we have all of the data
+        while (remainingData > 0):
+            newData = self.dataCom.read(remainingData)
+            remainingData = totalPacketLen - len(dataIn) - len(newData)
+            dataIn += newData
+            count += 1
+            if (self.saveBinary):
+                self.oldData += newData
+
+        result = dataIn
+        #print('Size of result after read all: %d'%(len(result)))
+        return result, numTLVs, tlvHeaderLength, numDetectedObj
+        #now check TLVs
+        print ('got tlvs sdk3x')
         newDataIn = dataIn
-        #print('Size of dataIn after read all: %d'%(len(newDataIn)))
-        #print('Num TLV: %d\n'%(numTLVs))
+        print('Size of dataIn after read all: %d'%(len(newDataIn)))
+        print('Num TLV: %d\n'%(numTLVs))
         for i in range(numTLVs):
             try:
                 tlvType, tlvLength = self.tlvHeaderDecode(newDataIn[:tlvHeaderLength])
                 print('TLV: %d\n'%(tlvType))
                 print('TLV Length: %d\n'%(tlvLength))
-                if tlvType>10:
-                    raise Exception('TLV index not valid') 
             except Exception as e:
                 print(e)
-                self.fail = 1
-                return
-
-
+                print ('failed to read OOB SDK3.x TLV')
             newDataIn = newDataIn[tlvHeaderLength:]
             if (tlvType == 1):
-                self.parseSDK3xPoints(newDataIn[:tlvLength], numDetectedObj)
+                self.parseSDK3xPoints(newDataIn[:tlvLength], self.numDetectedObj)
                 newDataIn = newDataIn[tlvLength:]
                 print('Size of newDataIn after parse tlv1: %d'%(len(newDataIn)))
             elif (tlvType == 7):
-                self.parseSDK3xSideInfo(newDataIn[:tlvLength], numDetectedObj)
+                self.parseSDK3xSideInfo(newDataIn[:tlvLength], self.numDetectedObj)
                 newDataIn = newDataIn[tlvLength:]
                 print('Size of newDataIn after parse tlv7: %d'%(len(newDataIn)))
             elif (tlvType == 4):
@@ -911,142 +897,36 @@ class uartParserSDK():
         return dataIn
 
 
+    # This function is always called - first read the UART, then call a function to parse the specific demo output
+    # This will return 1 frame of data. This must be called for each frame of data that is expected. It will return a dict containing:
+    #   1. Point Cloud
+    #   2. Target List
+    #   3. Target Indexes
+    #   4. number of detected points in point cloud
+    #   5. number of detected targets
+    #   6. frame number
+    #   7. Fail - if one, data is bad
+    #   8. classifier output
+    # Point Cloud and Target structure are liable to change based on the lab. Output is always cartesian.
+    def readAndParseUart(self):
+        self.fail = 0
+        self.byteData = bytes(1)
+        if (self.replay):
+            return self.replayHist()
+        numBytes = 8192
+        data = self.dataCom.read(numBytes)
+        if (self.byteData is None):
+            self.byteData = data
+        else:
+            self.byteData += data
+        if (self.saveBinary):
+            self.oldData += data
+        #try:
+        dataTosend = None
+        if (self.SDK3xPointCloud == 1):
+            dataTosend, numTLVs, tlvHeaderLength, numDetectedObj= self.sdk3xTLVHeader(self.byteData)
 
-    def parseBytes(self, data, numTLVs, tlvHeaderLength, numDetectedObj):
-        self.sdk3xTLVHeader(data, numTLVs, tlvHeaderLength, numDetectedObj)
-        return self.pcPolar, self.pcBufPing, self.targetBufPing, self.indexes, numDetectedObj, self.numDetectedTarget, self.frameNum, self.fail, self.classifierOutput, self.radarCube, self.rangeFFT, self.rangeDoppler
-
-
-
-    # # This function is always called - first read the UART, then call a function to parse the specific demo output
-    # # This will return 1 frame of data. This must be called for each frame of data that is expected. It will return a dict containing:
-    # #   1. Point Cloud
-    # #   2. Target List
-    # #   3. Target Indexes
-    # #   4. number of detected points in point cloud
-    # #   5. number of detected targets
-    # #   6. frame number
-    # #   7. Fail - if one, data is bad
-    # #   8. classifier output
-    # # Point Cloud and Target structure are liable to change based on the lab. Output is always cartesian.
-    # def readAndParseUart(self):
-    #     self.fail = 0
-    #     if (self.replay):
-    #         return self.replayHist()
-    #     #numBytes = 4666
-    #     numBytes = 8992*3
-    #     data = self.dataCom.read(numBytes)
-    #     if (self.byteData is None):
-    #         self.byteData = data
-    #     else:
-    #         self.byteData += data
-    #     if (self.saveBinary):
-    #         self.oldData += data
-    #     #try:
-    #     if (self.SDK3xPointCloud == 1):
-    #         self.byteData = self.sdk3xTLVHeader(self.byteData)
-    #     elif (self.SDK3xPC == 1):
-    #         self.byteData = self.sdk3xPCHeader(self.byteData)
-    #     elif (self.capon3D == 1):
-    #         self.byteData = self.Capon3DHeader(self.byteData)
-    #     else:
-    #         self.byteData = self.tlvHeader(self.byteData)
-    #     #except Exception as e:
-    #     #    print(e)
-    #     #    self.fail = 1
-    #     #return data after parsing and save to replay file
-    #     if (self.fail):
-    #         return self.pcPolar, self.pcBufPing, self.targetBufPing, self.indexes, self.numDetectedObj, self.numDetectedTarget, self.frameNum, self.fail, self.classifierOutput, self.radarCube, self.rangeFFT, self.rangeDoppler
-    #     # if (self.saveBinary):
-    #     #     if (self.frameNum%1000 == 0):
-    #     #         toSave = bytes(self.oldData)
-    #     #         fileName = 'binData/pHistBytes_'+str(self.saveNum)+'.bin'
-    #     #         self.saveNum += 1
-    #     #         bfile = open(fileName, 'wb')
-    #     #         bfile.write(toSave)
-    #     #         self.oldData = []
-    #     #         print ('Missed Frames ' + str(self.missedFrames)+'/1000')
-    #     #         self.missedFrames = 0
-    #     #         bfile.close
-    #     # if (self.saveTextFile):
-    #     #     if (self.frameNum%1000 == 0):
-    #     #         if (self.capon3D):
-    #     #             toSave = self.textStructCapon3D
-    #     #         elif (self.ifdm):
-    #     #             toSave = self.textStruct2D
-    #     #         print('Saved data file ', self.saveNumTxt)
-    #     #         fileName = 'binData/pHistText_'+str(self.saveNumTxt)+'.csv'
-    #     #         if (self.saveNumTxt < 75):
-    #     #             self.saveNumTxt += 1
-    #     #         else:
-    #     #             self.saveNumTxt = 0
-    #     #         tfile = open(fileName, 'w')
-    #     #         tfile.write('This file contains parsed UART data in sensor centric coordinates\n')
-    #     #         tfile.write('file format version 1.0\n')
-    #     #         #tfile.write(str(toSave))
-                
-                
-    #     #         if (self.capon3D):
-    #     #             #[frame #][header,pt cloud data,target info]
-    #     #             #[][header][magic, version, packetLength, platform, frameNum, subFrameNum, chirpMargin, frameMargin, uartSentTime, trackProcessTime, numTLVs, checksum]
-    #     #             #[][pt cloud][pt index][#elev, azim, doppler, range, snr]
-    #     #             #[][target][Target #][TID,x,y,z,vx,vy,vz,ax,ay,az]
-                    
-    #     #             for i in range (1000):
-    #     #                 tfile.write('magic, version, packetLength, platform, frameNum, subFrameNum, chirpMargin, frameMargin, uartSentTime, trackProcessTime, numTLVs, checksum\n')
-    #     #                 for j in range (0,12):
-    #     #                     tfile.write(str(self.textStructCapon3D[i,0,j,0]))
-    #     #                     tfile.write(',')
-    #     #                     #print(str(self.textStructCapon3D[i,0,j,0]))
-    #     #                 tfile.write('\n')
-    #     #                 tfile.write('elev, azim, doppler, range, snr\n')
-    #     #                 for j in range (np.count_nonzero(self.textStructCapon3D[i,1,:,0])): #self.numDetectedObj):#len(self.textStructCapon3D[i,1,:,0]!=0)):
-    #     #                     for k in range(5):
-    #     #                         tfile.write(str(self.textStructCapon3D[i,1,j,k]))
-    #     #                         tfile.write(',')
-    #     #                     tfile.write('\n')
-
-    #     #                 tfile.write('TID,x,y,z,vx,vy,vz,ax,ay,az\n')
-    #     #                 for j in range (np.count_nonzero(self.textStructCapon3D[i,2,:,1])):
-    #     #                     for k in range(10):
-    #     #                         tfile.write(str(self.textStructCapon3D[i,2,j,k]))
-    #     #                         tfile.write(',')
-    #     #                     tfile.write('\n')
-    #     #             self.textStructCapon3D = np.zeros(1000*3*12*self.maxPoints).reshape((1000,3,12,self.maxPoints))#[frame #][header,pt cloud data,target info]
-    #     #             tfile.close
-                    
-    #     #         if (self.ifdm):
-    #     #             #Sense and direct format
-    #     #             #[frame #][header,pt cloud data,target info]
-    #     #             #[][header][magic, version, platform, timestamp, packetLength, frameNum, subFrameNum, chirpMargin, frameMargin, uartSentTime, trackProcessTime, numTLVs, checksum]
-    #     #             #[][pt cloud][pt index][#range, azim, doppler, snr]
-    #     #             #[][target][Target #][TID,x,y,vx,vy,ax,ay]
-    #     #             for i in range (1000):
-    #     #                 tfile.write('magic, version, platform, timestamp, packetLength, frameNum, subFrameNum, chirpMargin, frameMargin, uartSentTime, trackProcessTime, numTLVs, checksum\n')
-    #     #                 for j in range (13):
-    #     #                      tfile.write(str(self.textStruct2D[i,0,j,0]))
-    #     #                      tfile.write(',')
-    #     #                 tfile.write('\n')
-    #     #                 tfile.write('range, azim, doppler, snr\n')
-    #     #                 for j in range (np.count_nonzero(self.textStruct2D[i,1,:,0])): 
-    #     #                     for k in range(4):
-    #     #                         tfile.write(str(self.textStruct2D[i,1,j,k]))
-    #     #                         tfile.write(',')
-    #     #                     tfile.write('\n')
-    #     #                 tfile.write('TID,x,y,vx,vy,ax,ay\n')
-    #     #                 for j in range (np.count_nonzero(self.textStruct2D[i,2,:,1])):
-    #     #                     for k in range(7):
-    #     #                         tfile.write(str(self.textStruct2D[i,2,j,k]))
-    #     #                         tfile.write(',')
-    #     #                     tfile.write('\n')
-    #     #             self.textStruct2D = np.zeros(1000*3*self.maxPoints*7).reshape((1000,3,self.maxPoints,7))#[frame #][header,pt cloud data,target info]
-    #     #             tfile.close
-                    
-                    
-                    
-    #     parseEnd = int(round(time.time()*1000))
-    #     #print (self.pcBufPing)
-    #     return self.pcPolar, self.pcBufPing, self.targetBufPing, self.indexes, self.numDetectedObj, self.numDetectedTarget, self.frameNum, self.fail, self.classifierOutput, self.radarCube, self.rangeFFT, self.rangeDoppler
+        return self.fail, dataTosend, numTLVs, tlvHeaderLength, numDetectedObj
 
     #find various utility functions here for connecting to COM Ports, send data, etc...
     #connect to com ports

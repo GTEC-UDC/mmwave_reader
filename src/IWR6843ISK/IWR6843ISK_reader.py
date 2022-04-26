@@ -47,12 +47,11 @@ from geometry_msgs.msg import PointStamped, Point
 
 class IWR6843ISKReader(object):
 
-    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publisher_cloud, publisher_target):
+    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publisher_target):
         self.uart_port = uart_port
         self.data_port = data_port
         self.parser = uartParserSDK(type='3D People Counting')
         self.publisher_radar = publisher_radar
-        self.publisher_cloud = publisher_cloud
         self.publisher_target = publisher_target
         self.config_file_path = config_file_path
 
@@ -78,22 +77,13 @@ class IWR6843ISKReader(object):
 
     def loop(self):
         data = self.parser.readAndParseUart()
-        classifierOutput = []
         polarPoints = data[0]
-        pointCloud = data[1]
         targets = data[2]
-        indexes = data[3]
         numPoints = data[4]
         numTargets = data[5]
-        frameNum = data[6]
-        fail = data[7]
-        classifierOutput = data[8]
+        #frameNum = data[6]
+        #fail = data[7]
 
-        #print('Num Points: ', numPoints)
-        #print('Points:', pointCloud)
-
-
-        cartesianPoints = np.zeros((numPoints,4))
         returns = []
 
         for i in range(numPoints):
@@ -102,12 +92,6 @@ class IWR6843ISKReader(object):
             elevation = polarPoints[2][i]
             doppler = polarPoints[3][i]
             snr = polarPoints[4][i]
-
-            x = polarPoints[0,i]*math.cos(polarPoints[2,i])*math.sin(polarPoints[1,i])
-            y = polarPoints[0,i]*math.cos(polarPoints[2,i])*math.cos(polarPoints[1,i])
-            z = polarPoints[0,i]*math.sin(polarPoints[2,i])
-
-            cartesianPoints[i] = [x,y,z, snr]
 
             radar_return = RadarReturn(range=ranging, azimuth=azim, elevation=elevation, doppler_velocity=doppler, amplitude=snr)
             returns.append(radar_return)
@@ -122,20 +106,6 @@ class IWR6843ISKReader(object):
             radar_scan = RadarScan(header_radar_scan, returns)
             self.publisher_radar.publish(radar_scan)
 
-
-            header_point_cloud = Header()
-            header_point_cloud.stamp = current_time
-            header_point_cloud.frame_id = "map"
-
-            fields_point_cloud =  [
-                PointField('x', 0, PointField.FLOAT32, 1),
-                PointField('y', 4, PointField.FLOAT32, 1),
-                PointField('z', 8, PointField.FLOAT32, 1),
-                PointField('snr', 12, PointField.FLOAT32, 1 )]
-
-            point_cloud_2 = pc2.create_cloud(header_point_cloud, fields_point_cloud, cartesianPoints)
-            self.publisher_cloud.publish(point_cloud_2)
-
         if (numTargets>0):
             header_target = Header()
             header_target.stamp = current_time
@@ -144,11 +114,6 @@ class IWR6843ISKReader(object):
                 target_point = Point(targets[1,n], targets[2,n], targets[3,n])
                 target_pos = PointStamped(header_target, target_point)
                 self.publisher_target.publish(target_pos)
-
-
-
-
-
 
 if __name__ == "__main__":
 
@@ -160,12 +125,10 @@ if __name__ == "__main__":
     data_port = rospy.get_param('~data_port')
     config_file_path = rospy.get_param('~config_file_path')
     publish_radar_topic = rospy.get_param('~publish_radar_topic')
-    publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
     publish_target_topic = rospy.get_param('~publish_target_topic')
     pub_radar = rospy.Publisher(publish_radar_topic, RadarScan, queue_size=100)
-    pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
     pub_target = rospy.Publisher(publish_target_topic, PointStamped, queue_size=100)
-    reader = IWR6843ISKReader(uart_port, data_port, config_file_path, pub_radar, pub_cloud, pub_target)
+    reader = IWR6843ISKReader(uart_port, data_port, config_file_path, pub_radar, pub_target)
 
     print("=========== GTEC mmWave IWR6843ISK Reader ============")
 

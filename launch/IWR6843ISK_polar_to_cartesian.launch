@@ -1,0 +1,38 @@
+<launch>
+    <arg default="/gtec/mmwave/radar" name="radar_topic"></arg>
+    <arg default="/gtec/mmwave/cartesian" name="publish_cloud_topic"></arg>
+
+    <!-- <arg default="3.725" name="radar_pos_x"></arg>
+    <arg default="2.749" name="radar_pos_y"></arg>
+    <arg default="2.066" name="radar_pos_z"></arg>
+    <arg default="-3.14" name="radar_yaw"></arg>
+    <arg default="0.25" name="radar_pitch"></arg>
+    <arg default="1.57" name="radar_roll"></arg>-->
+
+    <arg default="0" name="radar_pos_x"></arg>
+    <arg default="2.419" name="radar_pos_y"></arg>
+    <arg default="2.066" name="radar_pos_z"></arg>
+    <arg default="0" name="radar_yaw"></arg>
+    <arg default="0.25" name="radar_pitch"></arg>
+    <arg default="1.57" name="radar_roll"></arg>
+
+
+    <node pkg="tf" 
+        type="static_transform_publisher" 
+        name="odom_to_radar" 
+        args="$(arg radar_pos_x) $(arg radar_pos_y) $(arg radar_pos_z) $(arg radar_yaw) $(arg radar_pitch) $(arg radar_roll) odom radar 30" />
+    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 30" />
+
+    <node pkg="pose_publisher" type="pose_publisher" name="radar_pose">
+            <param name="map_frame" value="odom"></param>
+            <param name="base_frame" value="radar"></param>
+    </node>
+
+    <node name="IWR6843ISKPolarToCartesian" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_polar_to_cartesian.py">
+        <param name="radar_topic" value="$(arg radar_topic)"></param>
+        <param name="publish_cloud_topic" value="$(arg publish_cloud_topic)"></param>>
+    </node>
+
+
+
+</launch>
