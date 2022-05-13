@@ -37,7 +37,6 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
-from oob_parser import uartParserSDK
 
 from radar_msgs.msg import RadarScan, RadarReturn
 from sensor_msgs.msg import PointCloud2, PointField
@@ -75,12 +74,6 @@ class IWR6843ISKPolarToCartesian(object):
         x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         z = polarPoint.range*math.sin(polarPoint.elevation)
-        # x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
-        # y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
-        # z = polarPoint.range*math.sin(polarPoint.elevation)
-        # x = polarPoint.range*math.cos(polarPoint.azimuth)*math.sin(polarPoint.elevation)
-        # y = polarPoint.range*math.sin(polarPoint.azimuth)*math.sin(polarPoint.elevation)
-        # z = polarPoint.range*math.cos(polarPoint.elevation)
 
         cartesianPoint = [x,y,z, polarPoint.amplitude, polarPoint.doppler_velocity]
         return cartesianPoint
@@ -92,7 +85,6 @@ if __name__ == "__main__":
     rate = rospy.Rate(10)  # 10hz
 
     # Read parameters
-
     radar_topic = rospy.get_param('~radar_topic')
     publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
