@@ -72,15 +72,15 @@ class IWR6843ISKPolarToCartesian(object):
 
     def polar_to_cartesian(self, polarPoint):
 
-        x = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
-        y = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
+        x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
+        y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         z = polarPoint.range*math.sin(polarPoint.elevation)
         # x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         # y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         # z = polarPoint.range*math.sin(polarPoint.elevation)
-        # x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
-        # y = polarPoint.range*math.sin(polarPoint.elevation)*math.sin(polarPoint.azimuth)
-        # z = polarPoint.range*math.cos(polarPoint.azimuth)
+        # x = polarPoint.range*math.cos(polarPoint.azimuth)*math.sin(polarPoint.elevation)
+        # y = polarPoint.range*math.sin(polarPoint.azimuth)*math.sin(polarPoint.elevation)
+        # z = polarPoint.range*math.cos(polarPoint.elevation)
 
         cartesianPoint = [x,y,z, polarPoint.amplitude, polarPoint.doppler_velocity]
         return cartesianPoint

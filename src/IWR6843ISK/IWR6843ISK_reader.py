@@ -37,29 +37,35 @@ import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
-from oob_parser import uartParserSDK
+#from oob_parser import uartParserSDK
 
 from radar_msgs.msg import RadarScan, RadarReturn
 from sensor_msgs.msg import PointCloud2, PointField
 import sensor_msgs.point_cloud2 as pc2
 from geometry_msgs.msg import PointStamped, Point
 
+from tlv_parser import TLVParser 
+from tlv_uart_reader import TLVUartReader
+
 
 class IWR6843ISKReader(object):
 
-    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publisher_target):
+    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publishers_target, publisher_cloud, sensor_height, elev_tilt):
         self.uart_port = uart_port
         self.data_port = data_port
-        self.parser = uartParserSDK(type='3D People Counting')
+        self.uart_reader = TLVUartReader(type='3D People Counting')
         self.publisher_radar = publisher_radar
-        self.publisher_target = publisher_target
+        self.publishers_target = publishers_target
+        self.publisher_cloud = publisher_cloud
         self.config_file_path = config_file_path
+        self.sensor_height = sensor_height
+        self.elev_tilt = elev_tilt
 
     def connectCom(self):
         try:
             uart = self.uart_port
             data = self.data_port
-            self.parser.connectComPorts(uart, data)
+            self.uart_reader.connectComPorts(uart, data)
             return True
         except Exception as e:
             print(e)
@@ -69,51 +75,79 @@ class IWR6843ISKReader(object):
         try:
             cfg_file = open(self.config_file_path, 'r')
             cfg = cfg_file.readlines()
-            self.parser.sendCfg(cfg)
+            self.uart_reader.sendCfgOverwriteSensorPosition(cfg, self.sensor_height, self.elev_tilt)
+            #self.uart_reader.sendCfg(cfg)
             return True
         except Exception as e:
             print(e)
             return False
 
     def loop(self):
-        data = self.parser.readAndParseUart()
-        polarPoints = data[0]
-        targets = data[2]
-        numPoints = data[4]
-        numTargets = data[5]
-        #frameNum = data[6]
-        #fail = data[7]
+        # data = self.parser.readAndParseUart()
 
-        returns = []
+        hadFail, frameBytes, numTLVs, tlvHeaderLength, numDetectedObj= self.uart_reader.readAndParseUart()
+        if not hadFail:
+            newParser = TLVParser(labType=self.uart_reader.labId)
+            data = newParser.parseMsg(frameBytes, numTLVs, tlvHeaderLength, numDetectedObj)
 
-        for i in range(numPoints):
-            ranging = polarPoints[0][i]
-            azim = polarPoints[1][i]
-            elevation = polarPoints[2][i]
-            doppler = polarPoints[3][i]
-            snr = polarPoints[4][i]
+            polarPoints = data[0]
+            cartesianPoints = data[1]
+            targets = data[2]
+            indexes = data[3]
+            numPoints = data[4]
+            numTargets = data[5]
+            fail = data[7]
 
-            radar_return = RadarReturn(range=ranging, azimuth=azim, elevation=elevation, doppler_velocity=doppler, amplitude=snr)
-            returns.append(radar_return)
+            if not fail:
+                returns = []
+                ca_points = []
 
-        current_time = rospy.Time.now()
+                for i in range(numPoints):
+                    ranging = polarPoints[0][i]
+                    azim = polarPoints[1][i]
+                    elevation = polarPoints[2][i]
+                    doppler = polarPoints[3][i]
+                    snr = polarPoints[4][i]
 
-        if numPoints>0:
-            
-            header_radar_scan = Header()
-            header_radar_scan.stamp = current_time
-            header_radar_scan.frame_id = "map"
-            radar_scan = RadarScan(header_radar_scan, returns)
-            self.publisher_radar.publish(radar_scan)
+                    radar_return = RadarReturn(range=ranging, azimuth=azim, elevation=elevation, doppler_velocity=doppler, amplitude=snr)
+                    returns.append(radar_return)
 
-        if (numTargets>0):
-            header_target = Header()
-            header_target.stamp = current_time
-            header_target.frame_id = "map"
-            for n in range(numTargets):
-                target_point = Point(targets[1,n], targets[2,n], targets[3,n])
-                target_pos = PointStamped(header_target, target_point)
-                self.publisher_target.publish(target_pos)
+                    ca_point = [cartesianPoints[0][i],cartesianPoints[1][i],cartesianPoints[2][i], cartesianPoints[3][i], cartesianPoints[4][i]]
+                    ca_points.append(ca_point)
+
+                current_time = rospy.Time.now()
+
+                if numPoints>0:
+                    
+                    header_radar_scan = Header()
+                    header_radar_scan.stamp = current_time
+                    header_radar_scan.frame_id = "radar"
+                    radar_scan = RadarScan(header_radar_scan, returns)
+                    self.publisher_radar.publish(radar_scan)
+
+                    #TI Cartesian points
+                    header_point_cloud = Header()
+                    header_point_cloud.stamp = rospy.Time.now()
+                    header_point_cloud.frame_id = "radar"
+                    fields_point_cloud =  [
+                        PointField('x', 0, PointField.FLOAT32, 1),
+                        PointField('y', 4, PointField.FLOAT32, 1),
+                        PointField('z', 8, PointField.FLOAT32, 1),
+                        PointField('snr', 12, PointField.FLOAT32, 1 ),
+                        PointField('doppler', 16, PointField.FLOAT32, 1 )]
+
+                    point_cloud_ti = pc2.create_cloud(header_point_cloud, fields_point_cloud, ca_points)
+                    self.publisher_cloud.publish(point_cloud_ti)
+
+                if (numTargets>0):
+                    header_target = Header()
+                    header_target.stamp = current_time
+                    header_target.frame_id = "radar"
+                    for n in range(numTargets):
+                        if (n<8):
+                            target_point = Point(targets[1,n], targets[2,n], targets[3,n])
+                            target_pos = PointStamped(header_target, target_point)
+                            self.publishers_target[n].publish(target_pos)
 
 if __name__ == "__main__":
 
@@ -126,9 +160,19 @@ if __name__ == "__main__":
     config_file_path = rospy.get_param('~config_file_path')
     publish_radar_topic = rospy.get_param('~publish_radar_topic')
     publish_target_topic = rospy.get_param('~publish_target_topic')
+    sensor_height = float(rospy.get_param('~sensor_height'))
+    elev_tilt = float(rospy.get_param('~elev_tilt'))
+    #elev_tilt is in radians, the ti tracker needs it in degrees
+    elev_tilt = elev_tilt * 180.0/math.pi
+
+
     pub_radar = rospy.Publisher(publish_radar_topic, RadarScan, queue_size=100)
-    pub_target = rospy.Publisher(publish_target_topic, PointStamped, queue_size=100)
-    reader = IWR6843ISKReader(uart_port, data_port, config_file_path, pub_radar, pub_target)
+    pub_cloud = rospy.Publisher('/gtec/mmwave/ti_cloud', PointCloud2, queue_size=100)
+
+    pubs_target = []
+    for n in range(8):
+        pubs_target.append(rospy.Publisher(str(publish_target_topic)+'/'+str(n), PointStamped, queue_size=100))
+    reader = IWR6843ISKReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, sensor_height, elev_tilt)
 
     print("=========== GTEC mmWave IWR6843ISK Reader ============")
 
