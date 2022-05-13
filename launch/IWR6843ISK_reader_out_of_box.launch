@@ -1,7 +1,7 @@
 <launch>
     <arg default="/dev/ttyUSB0" name="uart_port"></arg>
     <arg default="/dev/ttyUSB1" name="data_port"></arg>
-    <arg default="/home/valba/Trabajo/GTEC/Research/ConfigsRadar/profile_doppler.cfg" name="config_file_path"></arg>
+    <arg default="../example_radar_configs/doppler_heatmap.cfg" name="config_file_path"></arg>
     
     <arg default="/gtec/mmwave/radar_cube" name="publish_radar_cube_topic"></arg>
     <arg default="/gtec/mmwave/radar_range_azimuth" name="publish_radar_range_azimuth_topic"></arg>

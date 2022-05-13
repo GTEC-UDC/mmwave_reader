@@ -11,13 +11,12 @@ from operator import add
 from tlv_uart_reader import LabId
 
 class TLVParser():
-    def __init__(self,labType=LabId.OutOfBoxDemo):
+    def __init__(self,labType:LabId, num_azimuth_antennas:int, num_range_bins:int, num_doppler_bins:int):
         self.labType = labType
         self.maxPoints = 1150
-        #TODO: get the next from config file or parameter
-        self.num_azimuth_antennas = 8
-        self.range_fft_size = 256
-        self.dopplerBins = 16
+        self.num_azimuth_antennas = num_azimuth_antennas
+        self.num_range_bins = num_range_bins
+        self.num_doppler_bins = num_doppler_bins
         self.pcPolar = np.zeros((5,self.maxPoints))
         self.pcBufPing = np.zeros((5,self.maxPoints))
         self.numDetectedObj = 0
@@ -49,13 +48,8 @@ class TLVParser():
         self.rangeFFT = []
         self.rangeDoppler = []
         if (self.labType==LabId.PeopleCounting3D):
-            #3D people counting format
+            self.textStructCapon3D = np.zeros(1000*3*self.maxPoints*10).reshape((1000,3,self.maxPoints,10))
             #[frame #][header,pt cloud data,target info]
-            #[][header][magic, version, packetLength, platform, frameNum, subFrameNum, chirpMargin, frameMargin, uartSentTime, trackProcessTime, numTLVs, checksum]
-            #[][pt cloud][pt index][#elev, azim, doppler, range, snr]
-            #[][target][Target #][TID,x,y,z,vx,vy,vz,ax,ay,az]
-            self.textStructCapon3D = np.zeros(1000*3*self.maxPoints*10).reshape((1000,3,self.maxPoints,10))#[frame #][header,pt cloud data,target info]
-
 
 
     def parseMsg(self, dataIn, numTLVs, tlvHeaderLength, numDetectedObj):
@@ -75,16 +69,9 @@ class TLVParser():
         self.numDetectedTarget = 0
         self.numDetectedObj = 0
         self.indexes = []
-        # print('TLVS #: %d\n'%(numTLVs))
         for i in range(numTLVs):
-            #try:
-            #print("DataIn Type", type(dataIn))
             try:
                 tlvType, tlvLength = self.tlvHeaderDecode(dataIn[:tlvHeaderLength])
-                # print('TLV: %d\n'%(tlvType))
-                # print('TLV Length: %d\n'%(tlvLength))
-                # if tlvType>10:
-                #     raise Exception('TLV index not valid') 
             except Exception as e:
                 print(e)
                 self.fail = 1
@@ -98,29 +85,15 @@ class TLVParser():
                 self.parseDetectedTracksSDK3x(dataIn[:dataLength], dataLength)
             elif (tlvType == 8):
                 self.parseTargetAssociations(dataIn[:dataLength])
-                #side info
-                #self.parseSDK3xSideInfo(dataIn[:dataLength], self.numDetectedObj)
             dataIn = dataIn[dataLength:]
-            # print('Size of DataIn after parse TLV Type (%d): %d'%(tlvType, len(dataIn)))
-            #except Exception as e:
-            #    print(e)
-            #    print ('failed to read OOB SDK3.x TLV')
-        # if (self.frameNum + 1 != frameNum):
-        #     self.missedFrames += frameNum - (self.frameNum + 1)
-        # self.frameNum = frameNum
         return dataIn
-
 
 
     def parseOutOfBoxMsg(self, dataIn, numTLVs, tlvHeaderLength, numDetectedObj):
             newDataIn = dataIn
-            #print('Size of dataIn after read all: %d'%(len(newDataIn)))
-            #print('Num TLV: %d\n'%(numTLVs))
             for i in range(numTLVs):
                 try:
                     tlvType, tlvLength = self.tlvHeaderDecode(newDataIn[:tlvHeaderLength])
-                    # print('TLV: %d\n'%(tlvType))
-                    # print('TLV Length: %d\n'%(tlvLength))
                     if tlvType>10:
                         raise Exception('TLV index not valid') 
                 except Exception as e:
@@ -139,12 +112,9 @@ class TLVParser():
                     self.parseSDK3xDopplerHeatmap(newDataIn[:tlvLength])
 
                 newDataIn = newDataIn[tlvLength:]
-                # print('Size of DataIn after parse TLV Type (%d): %d'%(tlvType, len(newDataIn)))
             return newDataIn
 
-
     def tlvHeaderDecode(self, data):
-        # print(len(data))
         tlvType, tlvLength = struct.unpack('2I', data)
         return tlvType, tlvLength
 
@@ -165,18 +135,14 @@ class TLVParser():
         pUnitSize = struct.calcsize(pUnitStruct)
         pUnit = struct.unpack(pUnitStruct, data[:pUnitSize])
         data = data[pUnitSize:]
-        objStruct = '2bh2H' #2 int8, 1 int16, 2 uint16
+        objStruct = '2bh2H'
         objSize = struct.calcsize(objStruct)
         self.numDetectedObj = int((tlvLength-pUnitSize)/objSize)
-        #if (self.printVerbosity == 1):
-        #print('Parsed Points: ', self.numDetectedObj)
-        print("Cloud Size {0}   ".format(self.numDetectedObj), end='\r')
+        #print("Cloud Size {0}   ".format(self.numDetectedObj), end='\r')
         for i in range(self.numDetectedObj):
             try:
                 elev, az, doppler, ran, snr = struct.unpack(objStruct, data[:objSize])
-                #print(elev, az, doppler, ran, snr)
                 data = data[objSize:]
-                #get range, azimuth, doppler, snr
                 self.pcPolar[0,i] = ran*pUnit[3]           #range
                 if (az >= 128):
                     print ('Az greater than 127')
@@ -214,11 +180,6 @@ class TLVParser():
         self.numDetectedTarget = int(tlvLength/targetSize)
         targets = np.empty((16,self.numDetectedTarget))
         rotTarget = [0,0,0]
-        #theta = self.profile['elev_tilt']
-        #print('theta = ',theta)
-        #Rx = np.matrix([[ 1, 0           , 0           ],
-        #           [ 0, math.cos(theta),-math.sin(theta)],
-        #           [ 0, math.sin(theta), math.cos(theta)]])
         try:
             for i in range(self.numDetectedTarget):
                 targetData = struct.unpack(targetStruct,data[:targetSize])
@@ -230,10 +191,6 @@ class TLVParser():
                     targets[0:3,i]=targetData[0:3]
                     # pos z
                     targets[3,i] = targetData[3]
-                    
-                    #rotTargetDataX,rotTargetDataY,rotTargetDataZ = rotX (targetData[1],targetData[2],targetData[3],self.profile['elev_tilt'])
-                    
-                    #print('Target Data TID,X,Y = ',rotTargetDataX,', ',rotTargetDataY,', ',rotTargetDataZ)
                     #vel x, vel y
                     targets[4:6,i] = targetData[4:6]
                     #vel z
@@ -296,10 +253,9 @@ class TLVParser():
             self.fail = 1
 
     def parseSDK3xDopplerHeatmap(self, dataIn):
-        #print('In parse doppler heat map dataIn size: %d'%(len(dataIn)))
         q = list(dataIn)
-        numDopplerBins = self.dopplerBins
-        numRangeBins = self.range_fft_size
+        numDopplerBins = self.num_doppler_bins
+        numRangeBins = self.num_range_bins
         qidx = 0
         self.rangeDoppler = []
 
@@ -317,12 +273,10 @@ class TLVParser():
 
     def parseSDK3xRadarCube(self, dataIn):
         NUM_ANGLE_BINS = 64
-        #print('In parse radar cube dataIn size: %d datain[0]= %d'%(len(dataIn), dataIn[0]))
-
         q = list(dataIn)
         self.rangeFFT = []
         qrows = self.num_azimuth_antennas
-        qcols = self.range_fft_size
+        qcols = self.num_range_bins
         qidx = 0
         QQ = []
         try:
@@ -359,7 +313,6 @@ class TLVParser():
                 fliplrQQ.append(QQ[tmpr][::-1])
 
             self.radarCube = fliplrQQ
-            # print('After radar cube dataIn size: %d datain[0]= %d'%(len(dataIn), dataIn[0]))
         except Exception as e:
             print(e)
             self.fail = 1

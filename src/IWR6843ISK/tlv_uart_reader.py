@@ -14,19 +14,10 @@ class LabId(Enum):
     PeopleCounting3D = 1
 
 class TLVUartReader():
-    def __init__(self,type='SDK Out of Box Demo'):
+    def __init__(self, lab_id:LabId):
         self.headerLength = 52
         self.magicWord = 0x708050603040102
-        self.labId = 0
-        #TODO: get the next from config file or parameter
-        self.num_azimuth_antennas = 8
-        self.range_fft_size = 256
-        self.dopplerBins = 16
-        
-        if (type=="SDK Out of Box Demo"):
-            self.labId = LabId.OutOfBoxDemo
-        elif (type=='3D People Counting'):
-            self.labId = LabId.PeopleCounting3D
+        self.labId = lab_id
 
     def connectComPorts(self, uartCom, dataCom):
         self.uartCom = serial.Serial(uartCom, 115200,parity=serial.PARITY_NONE,stopbits=serial.STOPBITS_ONE,timeout=0.3)

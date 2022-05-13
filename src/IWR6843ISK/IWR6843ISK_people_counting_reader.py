@@ -23,21 +23,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. """
 
 
-import configparser
+
 import rospy
-import time
-import serial
-import os
-import tf2_ros
-import csv
 import math
 from std_msgs.msg import Header
-from sklearn.cluster import OPTICS, cluster_optics_dbscan
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-#from oob_parser import uartParserSDK
 
 from radar_msgs.msg import RadarScan, RadarReturn
 from sensor_msgs.msg import PointCloud2, PointField
@@ -45,15 +34,15 @@ import sensor_msgs.point_cloud2 as pc2
 from geometry_msgs.msg import PointStamped, Point
 
 from tlv_parser import TLVParser 
-from tlv_uart_reader import TLVUartReader
+from tlv_uart_reader import TLVUartReader, LabId
 
 
-class IWR6843ISKReader(object):
+class IWR6843ISKPeopleCountingReader(object):
 
     def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publishers_target, publisher_cloud, sensor_height, elev_tilt):
         self.uart_port = uart_port
         self.data_port = data_port
-        self.uart_reader = TLVUartReader(type='3D People Counting')
+        self.uart_reader = TLVUartReader(lab_id=LabId.PeopleCounting3D)
         self.publisher_radar = publisher_radar
         self.publishers_target = publishers_target
         self.publisher_cloud = publisher_cloud
@@ -76,18 +65,15 @@ class IWR6843ISKReader(object):
             cfg_file = open(self.config_file_path, 'r')
             cfg = cfg_file.readlines()
             self.uart_reader.sendCfgOverwriteSensorPosition(cfg, self.sensor_height, self.elev_tilt)
-            #self.uart_reader.sendCfg(cfg)
             return True
         except Exception as e:
             print(e)
             return False
 
     def loop(self):
-        # data = self.parser.readAndParseUart()
-
         hadFail, frameBytes, numTLVs, tlvHeaderLength, numDetectedObj= self.uart_reader.readAndParseUart()
         if not hadFail:
-            newParser = TLVParser(labType=self.uart_reader.labId)
+            newParser = TLVParser(labType=self.uart_reader.labId, num_azimuth_antennas=8, num_range_bins=256, num_doppler_bins=16)
             data = newParser.parseMsg(frameBytes, numTLVs, tlvHeaderLength, numDetectedObj)
 
             polarPoints = data[0]
@@ -172,9 +158,9 @@ if __name__ == "__main__":
     pubs_target = []
     for n in range(8):
         pubs_target.append(rospy.Publisher(str(publish_target_topic)+'/'+str(n), PointStamped, queue_size=100))
-    reader = IWR6843ISKReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, sensor_height, elev_tilt)
+    reader = IWR6843ISKPeopleCountingReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, sensor_height, elev_tilt)
 
-    print("=========== GTEC mmWave IWR6843ISK Reader ============")
+    print("=========== GTEC mmWave IWR6843ISK People Counting Reader ============")
 
     connected = reader.connectCom()
     if connected:

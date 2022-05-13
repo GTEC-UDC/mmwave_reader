@@ -23,36 +23,24 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. """
 
 
-import configparser
-import rospy
-import time
-import serial
-import os
-import tf2_ros
-import csv
-import math
-from std_msgs.msg import Header
-from sklearn.cluster import OPTICS, cluster_optics_dbscan
-import matplotlib.gridspec as gridspec
-import matplotlib.pyplot as plt
-import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
-from oob_parser import uartParserSDK
-from oob_parser_reader import uartParserSDKReader
 
-from radar_msgs.msg import RadarScan, RadarReturn
+import rospy
+from std_msgs.msg import Header
+import numpy as np
+
 from sensor_msgs.msg import PointCloud2, PointField
 import sensor_msgs.point_cloud2 as pc2
 from gtec_msgs.msg import RadarCube, RadarRangeAzimuth, RadarRangeDoppler
 
-
+from tlv_parser import TLVParser 
+from tlv_uart_reader import TLVUartReader, LabId
 
 class IWR6843ISKOutOfBoxReader(object):
 
     def __init__(self, uart_port, data_port, config_file_path, publisher_cloud, publisher_radar_cube, publisher_radar_range_azimuth, publisher_radar_range_doppler):
         self.uart_port = uart_port
         self.data_port = data_port
-        self.parser = uartParserSDKReader(type='SDK Out of Box Demo')
+        self.uart_reader = TLVUartReader(lab_id=LabId.OutOfBoxDemo)
         self.publisher_radar_cube = publisher_radar_cube
         self.publisher_cloud = publisher_cloud
         self.publisher_radar_range_azimuth = publisher_radar_range_azimuth
@@ -66,7 +54,7 @@ class IWR6843ISKOutOfBoxReader(object):
         try:
             uart = self.uart_port
             data = self.data_port
-            self.parser.connectComPorts(uart, data)
+            self.uart_reader.connectComPorts(uart, data)
             return True
         except Exception as e:
             print(e)
@@ -76,19 +64,18 @@ class IWR6843ISKOutOfBoxReader(object):
         try:
             cfg_file = open(self.config_file_path, 'r')
             cfg = cfg_file.readlines()
-            self.parser.sendCfg(cfg)
-            #TODO: read num antennas and range_fft_size from this file
+            self.uart_reader.sendCfg(cfg)
             return True
         except Exception as e:
             print(e)
             return False
 
     def loop(self):
-        hadFail, frameBytes, numTLVs, tlvHeaderLength, numDetectedObj= self.parser.readAndParseUart()
+        hadFail, frameBytes, numTLVs, tlvHeaderLength, numDetectedObj= self.uart_reader.readAndParseUart()
 
         if not hadFail:
-            newParser = uartParserSDK(type='SDK Out of Box Demo')
-            data = newParser.parseBytes(frameBytes, numTLVs, tlvHeaderLength, numDetectedObj)
+            newParser = TLVParser(labType=self.uart_reader.labId, num_azimuth_antennas=8, num_range_bins=256, num_doppler_bins=16)
+            data = newParser.parseMsg(frameBytes, numTLVs, tlvHeaderLength, numDetectedObj)
 
             pointCloud = data[1]
             numPoints = data[4]
@@ -100,7 +87,6 @@ class IWR6843ISKOutOfBoxReader(object):
             rangeDoppler = data[11]
 
             if not fail:
-                print('Num points: %d'%(numPoints))
                 cartesianPoints = np.zeros((numPoints,5))
                 for i in range(numPoints):
                     x = pointCloud[0,i]
