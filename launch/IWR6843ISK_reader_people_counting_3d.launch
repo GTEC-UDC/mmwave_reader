@@ -12,7 +12,7 @@
 
     <!-- Radar device config-->
 
-    <arg default="../example_radar_configs/tracking_people_6m.cfg" name="config_file_path"></arg>
+    <arg default="$(find gtec_mmwave_reader)/example_radar_configs/tracking_people_6m.cfg" name="config_file_path"></arg>
     
     <arg default="0" name="radar_pos_x"></arg>
     <arg default="0" name="radar_pos_y"></arg>
