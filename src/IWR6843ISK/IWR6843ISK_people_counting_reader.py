@@ -65,6 +65,7 @@ class IWR6843ISKPeopleCountingReader(object):
             cfg_file = open(self.config_file_path, 'r')
             cfg = cfg_file.readlines()
             self.uart_reader.sendCfgOverwriteSensorPosition(cfg, self.sensor_height, self.elev_tilt)
+            #self.uart_reader.sendCfg(cfg)
             return True
         except Exception as e:
             print(e)
