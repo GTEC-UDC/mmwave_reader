@@ -39,7 +39,7 @@ from tlv_uart_reader import TLVUartReader, LabId
 
 class IWR6843ISKPeopleCountingReader(object):
 
-    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publishers_target, publisher_cloud, sensor_height, elev_tilt):
+    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publishers_target, publisher_cloud, sensor_height, elev_tilt, radar_id, publish_all_target_topic):
         self.uart_port = uart_port
         self.data_port = data_port
         self.uart_reader = TLVUartReader(lab_id=LabId.PeopleCounting3D)
@@ -49,6 +49,8 @@ class IWR6843ISKPeopleCountingReader(object):
         self.config_file_path = config_file_path
         self.sensor_height = sensor_height
         self.elev_tilt = elev_tilt
+        self.radar_id = radar_id
+        self.publish_all_target_topic = publish_all_target_topic
 
     def connectCom(self):
         try:
@@ -108,14 +110,14 @@ class IWR6843ISKPeopleCountingReader(object):
                     
                     header_radar_scan = Header()
                     header_radar_scan.stamp = current_time
-                    header_radar_scan.frame_id = "radar"
+                    header_radar_scan.frame_id = self.radar_id
                     radar_scan = RadarScan(header_radar_scan, returns)
                     self.publisher_radar.publish(radar_scan)
 
                     #TI Cartesian points
                     header_point_cloud = Header()
                     header_point_cloud.stamp = rospy.Time.now()
-                    header_point_cloud.frame_id = "radar"
+                    header_point_cloud.frame_id = self.radar_id
                     fields_point_cloud =  [
                         PointField('x', 0, PointField.FLOAT32, 1),
                         PointField('y', 4, PointField.FLOAT32, 1),
@@ -129,12 +131,14 @@ class IWR6843ISKPeopleCountingReader(object):
                 if (numTargets>0):
                     header_target = Header()
                     header_target.stamp = current_time
-                    header_target.frame_id = "radar"
+                    header_target.frame_id = self.radar_id
+                    
                     for n in range(numTargets):
                         if (n<8):
                             target_point = Point(targets[1,n], targets[2,n], targets[3,n])
                             target_pos = PointStamped(header_target, target_point)
                             self.publishers_target[n].publish(target_pos)
+                            self.publish_all_target_topic.publish(target_pos)
 
 if __name__ == "__main__":
 
@@ -149,17 +153,21 @@ if __name__ == "__main__":
     publish_target_topic = rospy.get_param('~publish_target_topic')
     sensor_height = float(rospy.get_param('~sensor_height'))
     elev_tilt = float(rospy.get_param('~elev_tilt'))
+    radar_id = rospy.get_param('~radar_id')
+    publish_all_target_topic = rospy.get_param('~publish_all_target_topic')
     #elev_tilt is in radians, the ti tracker needs it in degrees
     elev_tilt = elev_tilt * 180.0/math.pi
 
 
     pub_radar = rospy.Publisher(publish_radar_topic, RadarScan, queue_size=100)
-    pub_cloud = rospy.Publisher('/gtec/mmwave/ti_cloud', PointCloud2, queue_size=100)
+    pub_cloud = rospy.Publisher('/gtec/mmwave/'+radar_id+'/ti_cloud', PointCloud2, queue_size=100)
 
     pubs_target = []
     for n in range(8):
         pubs_target.append(rospy.Publisher(str(publish_target_topic)+'/'+str(n), PointStamped, queue_size=100))
-    reader = IWR6843ISKPeopleCountingReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, sensor_height, elev_tilt)
+
+    pub_all_targets = rospy.Publisher(str(publish_all_target_topic), PointStamped, queue_size=100)
+    reader = IWR6843ISKPeopleCountingReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, sensor_height, elev_tilt, radar_id, pub_all_targets)
 
     print("=========== GTEC mmWave IWR6843ISK People Counting Reader ============")
 
