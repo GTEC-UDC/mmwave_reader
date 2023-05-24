@@ -27,8 +27,8 @@
     </node>
 
     <!-- Reset device -->
-    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_on" output="screen" args="pub -1 /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '0'" />
-    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_off" output="screen" args="pub -1 /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '1'" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_off" output="screen" args="pub -1 /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '0'" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_on" output="screen" args="pub -1 /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '1'" />
 
     <!-- Radar device config-->
 
@@ -43,7 +43,7 @@
 
     <!-- Nodes -->
 
-    <node  name="IWR6843ISKPeopleCountingReader_$(arg radar_id)" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_people_counting_reader.py">
+    <node  name="IWR6843ISKPeopleCountingReader_$(arg radar_id)" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_people_counting_reader.py" launch-prefix="bash -c 'sleep 7; $0 $@' ">
         <param name="uart_port" value="$(arg uart_port)"></param>
         <param name="data_port" value="$(arg data_port)"></param>
         <param name="config_file_path" value="$(arg config_file_path)"></param>
