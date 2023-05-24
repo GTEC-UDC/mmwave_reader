@@ -14,7 +14,17 @@
 
     
     <!-- USB power listener -->
-    <node name="ros_rpi_usb_power" output="screen" pkg="gtec_rpi_usb_power" type="usb_switch_listener.py" />
+
+    <arg default="/uwb_switch_listener/$(arg radar_id)" name="command_topic_single"></arg>
+    <arg default="/uwb_switch_listener" name="command_topic"></arg>
+    <arg default="/home/ubuntu/src/rpi_usb_power_switch/usb_switch.sh" name="script_path"></arg>
+
+    <node name="usb_switch_listener_$(arg radar_id)" output="screen" pkg="gtec_rpi_usb_power" type="usb_switch_listener.py">
+        <param name="id" value="$(arg radar_id)"></param>
+        <param name="command_topic_single" value="$(arg command_topic_single)"></param>
+        <param name="command_topic" value="$(arg command_topic)"></param>
+        <param name="script_path" value="$(arg script_path)"></param>
+    </node>
 
     <!-- Reset device -->
     <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_on" output="screen" args="pub /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '0'" />
