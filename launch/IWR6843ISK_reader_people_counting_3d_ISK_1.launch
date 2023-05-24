@@ -24,8 +24,8 @@
     </node>
 
     <!-- Reset device -->
-    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_on" output="screen" args="pub /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '0'" />
-    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_off" output="screen" args="pub /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '1'" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_on" output="screen" args="pub -1 /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '0'" />
+    <node pkg="rostopic" type="rostopic" name="rostopic_pub_node_off" output="screen" args="pub -1 /uwb_switch_listener/$(arg radar_id) std_msgs/Int32 '1'" />
 
 
     <!-- Radar device config-->
