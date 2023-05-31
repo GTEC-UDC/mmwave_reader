@@ -41,11 +41,13 @@
     <arg default="0" name="radar_pitch"></arg>
     <arg default="-1.570796327" name="radar_roll"></arg>
 
-    <arg default="-7.415" name="boundary_box_x_min"></arg>
-    <arg default="-3.408" name="boundary_box_y_min"></arg>
-    <arg default="-0.5" name="boundary_box_z_min"></arg>
-    <arg default="5.045" name="boundary_box_x_max"></arg>
-    <arg default="2.989" name="boundary_box_y_max"></arg>
+    <arg default="-2.989" name="boundary_box_x_min"></arg>
+    <arg default="3.408" name="boundary_box_x_max"></arg>
+
+    <arg default="-7.415" name="boundary_box_y_min"></arg>
+    <arg default="5.045" name="boundary_box_y_max"></arg>
+
+    <arg default="0" name="boundary_box_z_min"></arg> 
     <arg default="2.2" name="boundary_box_z_max"></arg>
 
     <!-- Nodes -->
