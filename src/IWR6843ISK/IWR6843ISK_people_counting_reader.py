@@ -185,10 +185,8 @@ if __name__ == "__main__":
     boundary_box = BoundaryBox(boundary_box_x_min, boundary_box_y_min, boundary_box_z_min, boundary_box_x_max, boundary_box_y_max, boundary_box_z_max)
 
 
-
-
     #elev_tilt is in radians, the ti tracker needs it in degrees
-    elev_tilt = elev_tilt * 180.0/math.pi
+    elev_tilt = abs(elev_tilt) * 180.0/math.pi
 
 
     radar_pose = RadarPose(sensor_height, sensor_x, sensor_y, elev_tilt)
