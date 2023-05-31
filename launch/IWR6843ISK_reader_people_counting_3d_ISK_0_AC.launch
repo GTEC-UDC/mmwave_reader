@@ -80,10 +80,12 @@
 
     <node  pkg="tf" type="static_transform_publisher" name="map_to_odom_$(arg radar_id)" args="0 0 0 0 0 0 map odom 30" />
 
+    <node  pkg="tf" type="static_transform_publisher" name="radar_to_rviz_$(arg radar_id)" args="0 0 0 1.57 0 0 $(arg radar_id) rviz_$(arg radar_id) 30" />
+
     <node  pkg="pose_publisher" type="pose_publisher" name="radar_pose_$(arg radar_id)">
             <param name="map_frame" value="odom"></param>
-            <param name="base_frame" value="$(arg radar_id)"></param>
-            <remap from="/pose" to="/pose_$(arg radar_id)"/>
+            <param name="base_frame" value="rviz_$(arg radar_id)"></param>
+            <remap from="/pose" to="/gtec/mmwave/$(arg radar_id)/pose"/>
     </node>
 
     <node name="IWR6843ISKPolarToCartesian_$(arg radar_id)" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_polar_to_cartesian.py">
