@@ -202,7 +202,7 @@ if __name__ == "__main__":
         pubs_target.append(rospy.Publisher(str(publish_target_topic)+'/'+str(n), PointStamped, queue_size=100))
 
     pub_all_targets = rospy.Publisher(str(publish_all_target_topic), PointStamped, queue_size=100)
-    reader = IWR6843ISKPeopleCountingReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, sensor_height, elev_tilt, radar_id, pub_all_targets)
+    reader = IWR6843ISKPeopleCountingReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, radar_pose, boundary_box, radar_id, pub_all_targets)
 
     print("=========== GTEC mmWave IWR6843ISK People Counting Reader ============")
 
