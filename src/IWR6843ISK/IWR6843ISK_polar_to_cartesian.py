@@ -45,8 +45,9 @@ from geometry_msgs.msg import PointStamped, Point
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud):
+    def __init__(self, publisher_cloud, radar_id):
         self.publisher_cloud = publisher_cloud
+        self.radar_id = radar_id
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
@@ -57,7 +58,7 @@ class IWR6843ISKPolarToCartesian(object):
         
         header_point_cloud = Header()
         header_point_cloud.stamp = rospy.Time.now()
-        header_point_cloud.frame_id = "radar"
+        header_point_cloud.frame_id = radar_id
         fields_point_cloud =  [
             PointField('x', 0, PointField.FLOAT32, 1),
             PointField('y', 4, PointField.FLOAT32, 1),
@@ -87,8 +88,9 @@ if __name__ == "__main__":
     radar_topic = rospy.get_param('~radar_topic')
     publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
+    radar_id = rospy.get_param('~radar_id')
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud,radar_id)
 
     rospy.Subscriber(radar_topic, RadarScan,
                      polarToCartesian.radar_listener)

@@ -37,9 +37,25 @@ from tlv_parser import TLVParser
 from tlv_uart_reader import TLVUartReader, LabId
 
 
+class RadarPose(object):
+    def __init__(self, sensor_height, sensor_x, sensor_y, elev_tilt):
+        self.sensor_height = sensor_height
+        self.sensor_x = sensor_x
+        self.sensor_y = sensor_y
+        self.elev_tilt = elev_tilt
+
+class BoundaryBox(object):
+    def __init__(self, min_x, min_y, min_z, max_x, max_y, max_z):
+        self.min_x = min_x
+        self.min_y = min_y
+        self.min_z = min_z
+        self.max_x = max_x
+        self.max_y = max_y
+        self.max_z = max_z
+
 class IWR6843ISKPeopleCountingReader(object):
 
-    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publishers_target, publisher_cloud, sensor_height, elev_tilt, radar_id, publish_all_target_topic):
+    def __init__(self, uart_port, data_port, config_file_path, publisher_radar, publishers_target, publisher_cloud, radar_pose, boundary_box, radar_id, publish_all_target_topic):
         self.uart_port = uart_port
         self.data_port = data_port
         self.uart_reader = TLVUartReader(lab_id=LabId.PeopleCounting3D)
@@ -47,10 +63,11 @@ class IWR6843ISKPeopleCountingReader(object):
         self.publishers_target = publishers_target
         self.publisher_cloud = publisher_cloud
         self.config_file_path = config_file_path
-        self.sensor_height = sensor_height
-        self.elev_tilt = elev_tilt
         self.radar_id = radar_id
         self.publish_all_target_topic = publish_all_target_topic
+
+        self.radar_pose = radar_pose
+        self.boundary_box = boundary_box
 
     def connectCom(self):
         try:
@@ -66,7 +83,7 @@ class IWR6843ISKPeopleCountingReader(object):
         try:
             cfg_file = open(self.config_file_path, 'r')
             cfg = cfg_file.readlines()
-            self.uart_reader.sendCfgOverwriteSensorPosition(cfg, self.sensor_height, self.elev_tilt)
+            self.uart_reader.sendCfgOverwriteSensorPosition(cfg, self.radar_pose, self.boundary_box)
             #self.uart_reader.sendCfg(cfg)
             return True
         except Exception as e:
@@ -152,12 +169,28 @@ if __name__ == "__main__":
     publish_radar_topic = rospy.get_param('~publish_radar_topic')
     publish_target_topic = rospy.get_param('~publish_target_topic')
     sensor_height = float(rospy.get_param('~sensor_height'))
+    sensor_x = float(rospy.get_param('~sensor_x'))
+    sensor_y = float(rospy.get_param('~sensor_y'))
     elev_tilt = float(rospy.get_param('~elev_tilt'))
     radar_id = rospy.get_param('~radar_id')
     publish_all_target_topic = rospy.get_param('~publish_all_target_topic')
+
+    radar_pose = RadarPose(sensor_height, sensor_x, sensor_y)
+
+    boundary_box_x_min = float(rospy.get_param('~boundary_box_x_min'))
+    boundary_box_y_min = float(rospy.get_param('~boundary_box_y_min'))
+    boundary_box_z_min = float(rospy.get_param('~boundary_box_z_min'))
+    boundary_box_x_max = float(rospy.get_param('~boundary_box_x_max'))
+    boundary_box_y_max = float(rospy.get_param('~boundary_box_y_max'))
+    boundary_box_z_max = float(rospy.get_param('~boundary_box_z_max'))
+
+    boundary_box = BoundaryBox(boundary_box_x_min, boundary_box_y_min, boundary_box_z_min, boundary_box_x_max, boundary_box_y_max, boundary_box_z_max)
+
+
+
+
     #elev_tilt is in radians, the ti tracker needs it in degrees
     elev_tilt = elev_tilt * 180.0/math.pi
-
 
     pub_radar = rospy.Publisher(publish_radar_topic, RadarScan, queue_size=100)
     pub_cloud = rospy.Publisher('/gtec/mmwave/'+radar_id+'/ti_cloud', PointCloud2, queue_size=100)

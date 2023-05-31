@@ -25,10 +25,14 @@ class TLVUartReader():
         self.dataCom.reset_output_buffer()
         print('Connected')
 
-    def sendCfgOverwriteSensorPosition(self, cfg, sensor_height, elev_tilt):
+    def sendCfgOverwriteSensorPosition(self, cfg, radar_pose, boundary_box):
         for line in cfg:
             if (line.startswith('sensorPosition')):
-                self.sendLine('sensorPosition %f 0 %f\n'%(sensor_height, elev_tilt))
+                self.sendLine('sensorPosition %f 0 %f\n'%(radar_pose.sensor_height, radar_pose.elev_tilt))
+            elif (line.startswith('boundaryBox')):
+                self.sendLine('boundaryBox %f %f %f %f %f %f\n'%(boundary_box.min_x, boundary_box.min_y, boundary_box.min_z, boundary_box.max_x, boundary_box.max_y, boundary_box.max_z))
+            elif (line.startswith('presenceBoundaryBox')):
+                self.sendLine('presenceBoundaryBox %f %f %f %f %f %f\n'%(boundary_box.min_x, boundary_box.min_y, boundary_box.min_z, boundary_box.max_x, boundary_box.max_y, boundary_box.max_z))
             else:
                 self.sendLine(line)
         time.sleep(3)

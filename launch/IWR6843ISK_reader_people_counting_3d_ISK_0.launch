@@ -41,6 +41,13 @@
     <arg default="0" name="radar_pitch"></arg>
     <arg default="-0.22" name="radar_roll"></arg>
 
+        <arg default="0" name="boundary_box_x_min"></arg>
+    <arg default="0" name="boundary_box_y_min"></arg>
+    <arg default="-0.5" name="boundary_box_z_min"></arg>
+    <arg default="13.5" name="boundary_box_x_max"></arg>
+    <arg default="0" name="boundary_box_y_max"></arg>
+    <arg default="3.2" name="boundary_box_z_max"></arg>
+
     <!-- Nodes -->
 
     <node  name="IWR6843ISKPeopleCountingReader_$(arg radar_id)" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_people_counting_reader.py">
@@ -54,6 +61,14 @@
         <param name="elev_tilt" value="$(eval -1. * arg('radar_roll'))"></param>
         <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_all_target_topic" value="$(arg publish_all_target_topic)"></param>
+        <param name="sensor_x" value="$(arg radar_pos_x)"></param>
+        <param name="sensor_y" value="$(arg radar_pos_y)"></param>
+        <param name="boundary_box_x_min" value="$(arg boundary_box_x_min)"></param>
+        <param name="boundary_box_y_min" value="$(arg boundary_box_y_min)"></param>
+        <param name="boundary_box_z_min" value="$(arg boundary_box_z_min)"></param>
+        <param name="boundary_box_x_max" value="$(arg boundary_box_x_max)"></param>
+        <param name="boundary_box_y_max" value="$(arg boundary_box_y_max)"></param>
+        <param name="boundary_box_z_max" value="$(arg boundary_box_z_max)"></param>
     </node>
 
     <node pkg="tf" 
@@ -70,6 +85,7 @@
 
     <node name="IWR6843ISKPolarToCartesian_$(arg radar_id)" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_polar_to_cartesian.py">
         <param name="radar_topic" value="$(arg publish_radar_topic)"></param>
+        <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_cloud_topic" value="$(arg publish_cartesian_cloud_topic)"></param>>
     </node>
 
