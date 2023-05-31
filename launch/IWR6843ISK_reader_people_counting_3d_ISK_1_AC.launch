@@ -83,6 +83,7 @@
     <node  pkg="pose_publisher" type="pose_publisher" name="radar_pose_$(arg radar_id)">
             <param name="map_frame" value="odom"></param>
             <param name="base_frame" value="$(arg radar_id)"></param>
+            <remap from="/pose" to="/pose_$(arg radar_id)"/>
     </node>
 
     <node name="IWR6843ISKPolarToCartesian_$(arg radar_id)" output="screen" pkg="gtec_mmwave_reader" type="IWR6843ISK_polar_to_cartesian.py">
