@@ -175,8 +175,6 @@ if __name__ == "__main__":
     radar_id = rospy.get_param('~radar_id')
     publish_all_target_topic = rospy.get_param('~publish_all_target_topic')
 
-    radar_pose = RadarPose(sensor_height, sensor_x, sensor_y)
-
     boundary_box_x_min = float(rospy.get_param('~boundary_box_x_min'))
     boundary_box_y_min = float(rospy.get_param('~boundary_box_y_min'))
     boundary_box_z_min = float(rospy.get_param('~boundary_box_z_min'))
@@ -191,6 +189,10 @@ if __name__ == "__main__":
 
     #elev_tilt is in radians, the ti tracker needs it in degrees
     elev_tilt = elev_tilt * 180.0/math.pi
+
+
+    radar_pose = RadarPose(sensor_height, sensor_x, sensor_y, elev_tilt)
+
 
     pub_radar = rospy.Publisher(publish_radar_topic, RadarScan, queue_size=100)
     pub_cloud = rospy.Publisher('/gtec/mmwave/'+radar_id+'/ti_cloud', PointCloud2, queue_size=100)
