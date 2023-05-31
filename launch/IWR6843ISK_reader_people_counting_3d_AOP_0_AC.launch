@@ -4,7 +4,7 @@
     <arg default="/dev/ttyUSB1" name="data_port"></arg>
 
     <!-- Topic names-->
-    <arg default="isk_0" name="radar_id"></arg>
+    <arg default="aop_0" name="radar_id"></arg>
     <arg default="/gtec/mmwave/$(arg radar_id)/radar" name="publish_radar_topic"></arg>
     <arg default="/gtec/mmwave/$(arg radar_id)/cloud" name="publish_cloud_topic"></arg>
     <arg default="/gtec/mmwave/$(arg radar_id)/target" name="publish_target_topic"></arg>
