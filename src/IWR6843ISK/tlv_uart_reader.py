@@ -9,6 +9,22 @@ import fft
 from operator import add
 from enum import Enum
 
+class RadarPose(object):
+    def __init__(self, sensor_height, sensor_x, sensor_y, elev_tilt):
+        self.sensor_height = sensor_height
+        self.sensor_x = sensor_x
+        self.sensor_y = sensor_y
+        self.elev_tilt = elev_tilt
+
+class BoundaryBox(object):
+    def __init__(self, min_x, min_y, min_z, max_x, max_y, max_z):
+        self.min_x = min_x
+        self.min_y = min_y
+        self.min_z = min_z
+        self.max_x = max_x
+        self.max_y = max_y
+        self.max_z = max_z
+        
 class LabId(Enum):
     OutOfBoxDemo = 0
     PeopleCounting3D = 1

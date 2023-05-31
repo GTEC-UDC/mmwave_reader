@@ -33,7 +33,7 @@ import sensor_msgs.point_cloud2 as pc2
 from gtec_msgs.msg import RadarCube, RadarRangeAzimuth, RadarRangeDoppler
 
 from tlv_parser import TLVParser 
-from tlv_uart_reader import TLVUartReader, LabId
+from tlv_uart_reader import TLVUartReader, LabId, RadarPose, BoundaryBox
 
 class IWR6843ISKOutOfBoxReader(object):
 
