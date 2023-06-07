@@ -37,7 +37,7 @@
     <arg default="0" name="radar_pos_x"></arg>
     <arg default="3.374" name="radar_pos_y"></arg>
     <arg default="2.337" name="radar_pos_z"></arg>
-    <arg default="0" name="radar_yaw"></arg>
+    <arg default="1.5708" name="radar_yaw"></arg>
     <arg default="0" name="radar_pitch"></arg>
     <arg default="-0.0873" name="radar_roll"></arg>
 
@@ -80,7 +80,7 @@
 
     <node  pkg="tf" type="static_transform_publisher" name="map_to_odom_$(arg radar_id)" args="0 0 0 0 0 0 map odom 30" />
 
-    <node  pkg="tf" type="static_transform_publisher" name="radar_to_rviz_$(arg radar_id)" args="0 0 0 1.57 0 0 $(arg radar_id) rviz_$(arg radar_id) 30" />
+    <node  pkg="tf" type="static_transform_publisher" name="radar_to_rviz_$(arg radar_id)" args="0 0 0 0 0 0 $(arg radar_id) rviz_$(arg radar_id) 30" />
 
     <node  pkg="pose_publisher" type="pose_publisher" name="radar_pose_$(arg radar_id)">
             <param name="map_frame" value="odom"></param>
