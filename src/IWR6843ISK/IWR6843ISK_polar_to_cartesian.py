@@ -70,12 +70,14 @@ class IWR6843ISKPolarToCartesian(object):
         self.publisher_cloud.publish(point_cloud_2)
 
     def polar_to_cartesian(self, polarPoint):
-
+        #We transform from a left-handled axis to a right-handled axis, to work with ROS and RVIZ
         x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         z = polarPoint.range*math.sin(polarPoint.elevation)
 
-        cartesianPoint = [x,y,z, polarPoint.amplitude, polarPoint.doppler_velocity]
+        x_right = y
+        y_right = -x
+        cartesianPoint = [x_right,y_right,z, polarPoint.amplitude, polarPoint.doppler_velocity]
         return cartesianPoint
 
 
