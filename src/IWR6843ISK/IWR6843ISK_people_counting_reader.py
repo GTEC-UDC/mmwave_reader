@@ -153,7 +153,9 @@ class IWR6843ISKPeopleCountingReader(object):
                     for n in range(numTargets):
                         if (n<8):
                             target_point = Point(targets[1,n], targets[2,n], targets[3,n])
-                            target_pos = PointStamped(header_target, target_point)
+                            # Axis change, to be used in ROS
+                            target_point_right = Point(target_point.y, -1*target_point.x, target_point.z)
+                            target_pos = PointStamped(header_target, target_point_right)
                             self.publishers_target[n].publish(target_pos)
                             self.publish_all_target_topic.publish(target_pos)
 
