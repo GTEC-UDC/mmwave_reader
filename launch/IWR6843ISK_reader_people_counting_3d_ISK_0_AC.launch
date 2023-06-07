@@ -39,7 +39,7 @@
     <arg default="2.337" name="radar_pos_z"></arg>
     <arg default="0" name="radar_yaw"></arg>
     <arg default="0" name="radar_pitch"></arg>
-    <arg default="0.0873" name="radar_roll"></arg>
+    <arg default="-0.0873" name="radar_roll"></arg>
 
     <arg default="-3.014" name="boundary_box_x_min"></arg>
     <arg default="3.374" name="boundary_box_x_max"></arg>
