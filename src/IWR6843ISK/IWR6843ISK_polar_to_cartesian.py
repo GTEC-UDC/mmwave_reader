@@ -45,9 +45,10 @@ from geometry_msgs.msg import PointStamped, Point
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, radar_id):
+    def __init__(self, publisher_cloud, radar_id, elev_tilt):
         self.publisher_cloud = publisher_cloud
         self.radar_id = radar_id
+        self.elev_tilt = elev_tilt
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
@@ -70,11 +71,17 @@ class IWR6843ISKPolarToCartesian(object):
         self.publisher_cloud.publish(point_cloud_2)
 
     def polar_to_cartesian(self, polarPoint):
-        #We transform from a left-handled axis to a right-handled axis, to work with ROS and RVIZ
-        x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
-        y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
-        z = polarPoint.range*math.sin(polarPoint.elevation)
+        
+        # x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
+        # y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
+        # z = polarPoint.range*math.sin(polarPoint.elevation)
 
+        angle_with_tilt = self.elev_tilt - polarPoint.elevation
+        x = polarPoint.range*math.cos(angle_with_tilt)*math.sin(polarPoint.azimuth)
+        y = polarPoint.range*math.cos(angle_with_tilt)*math.cos(polarPoint.azimuth)
+        z = polarPoint.range*math.sin(angle_with_tilt)
+
+        #We transform from a left-handled axis to a right-handled axis, to work with ROS and RVIZ
         x_right = y
         y_right = -x
         cartesianPoint = [x_right,y_right,z, polarPoint.amplitude, polarPoint.doppler_velocity]
@@ -91,8 +98,9 @@ if __name__ == "__main__":
     publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
     radar_id = rospy.get_param('~radar_id')
+    elev_tilt = float(rospy.get_param('~elev_tilt'))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud,radar_id)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud,radar_id,elev_tilt)
 
     rospy.Subscriber(radar_topic, RadarScan,
                      polarToCartesian.radar_listener)
