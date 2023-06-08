@@ -148,7 +148,7 @@ class IWR6843ISKPeopleCountingReader(object):
                 if (numTargets>0):
                     header_target = Header()
                     header_target.stamp = current_time
-                    header_target.frame_id = self.radar_id
+                    header_target.frame_id = "target_" + self.radar_id
                     
                     for n in range(numTargets):
                         if (n<8):

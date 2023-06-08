@@ -11,7 +11,6 @@
     <arg default="/gtec/mmwave/$(arg radar_id)/cartesian" name="publish_cartesian_cloud_topic"></arg>
     <arg default="/gtec/mmwave/all/target" name="publish_all_target_topic"></arg>
 
-
    <!-- USB power listener -->
     <arg default="/uwb_switch_listener/$(arg radar_id)" name="command_topic_single"></arg>
     <arg default="/uwb_switch_listener" name="command_topic"></arg>
