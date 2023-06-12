@@ -45,10 +45,11 @@ from geometry_msgs.msg import PointStamped, Point
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, radar_id, elev_tilt):
+    def __init__(self, publisher_cloud, radar_id, elev_tilt, radar_yaw):
         self.publisher_cloud = publisher_cloud
         self.radar_id = radar_id
         self.elev_tilt = elev_tilt
+        self.radar_yaw = radar_yaw
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
@@ -76,10 +77,11 @@ class IWR6843ISKPolarToCartesian(object):
         # y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         # z = polarPoint.range*math.sin(polarPoint.elevation)
 
-        angle_with_tilt = self.elev_tilt - polarPoint.elevation
-        x = polarPoint.range*math.cos(angle_with_tilt)*math.sin(polarPoint.azimuth)
-        y = polarPoint.range*math.cos(angle_with_tilt)*math.cos(polarPoint.azimuth)
-        z = polarPoint.range*math.sin(angle_with_tilt)
+        elevation_with_tilt = self.elev_tilt - polarPoint.elevation
+        azimut_with_yaw = self.radar_yaw + polarPoint.azimuth
+        x = polarPoint.range*math.cos(elevation_with_tilt)*math.sin(azimut_with_yaw)
+        y = polarPoint.range*math.cos(elevation_with_tilt)*math.cos(azimut_with_yaw)
+        z = polarPoint.range*math.sin(elevation_with_tilt)
 
         #We transform from a left-handled axis to a right-handled axis, to work with ROS and RVIZ
         x_right = y
@@ -99,8 +101,10 @@ if __name__ == "__main__":
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
     radar_id = rospy.get_param('~radar_id')
     elev_tilt = float(rospy.get_param('~elev_tilt'))
+    radar_yaw = float(rospy.get_param('~radar_yaw'))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud,radar_id,elev_tilt)
+
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud,radar_id,elev_tilt, radar_yaw)
 
     rospy.Subscriber(radar_topic, RadarScan,
                      polarToCartesian.radar_listener)
