@@ -10,6 +10,7 @@
     <arg default="/gtec/mmwave/$(arg radar_id)/target" name="publish_target_topic"></arg>
     <arg default="/gtec/mmwave/$(arg radar_id)/cartesian" name="publish_cartesian_cloud_topic"></arg>
     <arg default="/gtec/mmwave/all/target" name="publish_all_target_topic"></arg>
+    <arg default="/gtec/mmwave/all/cartesian" name="publish_all_cartesian_topic"></arg>
 
     <!-- Radar device config-->
 
@@ -74,6 +75,7 @@
         <param name="radar_topic" value="$(arg publish_radar_topic)"></param>
         <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_cloud_topic" value="$(arg publish_cartesian_cloud_topic)"></param>
+        <param name="publish_all_cartesian_topic" value="$(arg publish_all_cartesian_topic)"></param>
         <param name="elev_tilt" value="$(arg radar_pitch)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
     </node>

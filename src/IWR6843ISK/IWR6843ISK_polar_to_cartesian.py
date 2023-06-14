@@ -45,18 +45,22 @@ from geometry_msgs.msg import PointStamped, Point
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, radar_id, elev_tilt, radar_yaw):
+    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, elev_tilt, radar_yaw, radar_tf):
         self.publisher_cloud = publisher_cloud
+        self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
         self.elev_tilt = elev_tilt
         self.radar_yaw = radar_yaw
+        self.radar_tf = radar_tf
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
         numPoints = len(polarPoints)
         cartesianPoints = np.zeros((numPoints,5))
+        cartesianPointsTransformed = np.zeros((numPoints,5))
         for i in range(numPoints):
-            cartesianPoints[i]  = self.polar_to_cartesian(polarPoints[i])
+            cartesianPoints[i],cartesianPointsTransformed[i]  = self.polar_to_cartesian(polarPoints[i])
+
         
         header_point_cloud = Header()
         header_point_cloud.stamp = rospy.Time.now()
@@ -71,7 +75,11 @@ class IWR6843ISKPolarToCartesian(object):
         point_cloud_2 = pc2.create_cloud(header_point_cloud, fields_point_cloud, cartesianPoints)
         self.publisher_cloud.publish(point_cloud_2)
 
-    def polar_to_cartesian(self, polarPoint):
+        header_point_cloud.frame_id = "odom"
+        point_cloud_2_tf = pc2.create_cloud(header_point_cloud, fields_point_cloud, cartesianPointsTransformed)
+        self.publisher_cloud_all.publish(point_cloud_2_tf)
+
+    def polar_to_cartesian(self, polarPoint, odom_transform):
         
         # x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         # y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
@@ -87,7 +95,13 @@ class IWR6843ISKPolarToCartesian(object):
         x_right = y
         y_right = -x
         cartesianPoint = [x_right,y_right,z, polarPoint.amplitude, polarPoint.doppler_velocity]
-        return cartesianPoint
+
+        #We return the point transformed to the Odom space (to fuse differente radars)
+        point_msg = Point(x_right,y_right,z)
+        point_tf = tf2_geometry_msgs.do_transform_point(point_msg, odom_transform)
+        cartesianPointTf = [point_tf.x, point_tf.y, point_tf.z, polarPoint.amplitude, polarPoint.doppler_velocity]
+
+        return (cartesianPoint, cartesianPointTF)
 
 
 if __name__ == "__main__":
@@ -98,13 +112,22 @@ if __name__ == "__main__":
     # Read parameters
     radar_topic = rospy.get_param('~radar_topic')
     publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
+    publish_all_cartesian_topic = rospy.get_param('~publish_all_cartesian_topic')
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
     radar_id = rospy.get_param('~radar_id')
     elev_tilt = float(rospy.get_param('~elev_tilt'))
     radar_yaw = float(rospy.get_param('~radar_yaw'))
 
+    transform_radar_to_odom = tf_buffer.lookup_transform("odom",
+                                point_msg.header.frame_id, #source frame
+                                rospy.Time(0), #get the tf at first available time
+                                rospy.Duration(1.0))
+        tf_pos = tf2_geometry_msgs.do_transform_point(point_msg, transform_radar_to_odom)
+        return TargetPoint(tf_pos.point.x, tf_pos.point.y, tf_pos.point.z)
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud,radar_id,elev_tilt, radar_yaw)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, publish_all_cartesian_topic, radar_id,elev_tilt, radar_yaw)
+
+
 
     rospy.Subscriber(radar_topic, RadarScan,
                      polarToCartesian.radar_listener)
