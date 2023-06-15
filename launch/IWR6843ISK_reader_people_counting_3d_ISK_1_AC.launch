@@ -79,6 +79,7 @@
         <param name="publish_all_cartesian_topic" value="$(arg publish_all_cartesian_topic)"></param>
         <param name="elev_tilt" value="$(arg radar_pitch)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
+        <param name="radar_roll" value="$(arg radar_roll)"></param>
     </node>
 
 </launch>
