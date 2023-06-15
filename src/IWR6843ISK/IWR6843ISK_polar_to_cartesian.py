@@ -122,7 +122,7 @@ if __name__ == "__main__":
     tf_buffer = tf2_ros.Buffer(rospy.Duration(2.0)) #tf buffer length
     tf_listener = tf2_ros.TransformListener(tf_buffer)
     transform_radar_to_odom = tf_buffer.lookup_transform("odom",
-                                point_msg.header.frame_id, #source frame
+                                radar_id, #source frame
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(2.0))
 
