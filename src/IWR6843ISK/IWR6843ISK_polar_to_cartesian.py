@@ -59,7 +59,7 @@ class IWR6843ISKPolarToCartesian(object):
         cartesianPoints = np.zeros((numPoints,5))
         cartesianPointsTransformed = np.zeros((numPoints,5))
         for i in range(numPoints):
-            cartesianPoints[i],cartesianPointsTransformed[i]  = self.polar_to_cartesian(polarPoints[i])
+            cartesianPoints[i],cartesianPointsTransformed[i]  = self.polar_to_cartesian(polarPoints[i], self.radar_tf)
 
         
         header_point_cloud = Header()
@@ -122,10 +122,8 @@ if __name__ == "__main__":
                                 point_msg.header.frame_id, #source frame
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(1.0))
-        tf_pos = tf2_geometry_msgs.do_transform_point(point_msg, transform_radar_to_odom)
-        return TargetPoint(tf_pos.point.x, tf_pos.point.y, tf_pos.point.z)
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, publish_all_cartesian_topic, radar_id,elev_tilt, radar_yaw)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, publish_all_cartesian_topic, radar_id,elev_tilt, radar_yaw, transform_radar_to_odom)
 
 
 
