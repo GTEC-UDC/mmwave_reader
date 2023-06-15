@@ -23,9 +23,9 @@
     <arg default="7.415" name="radar_pos_x"></arg>
     <arg default="3.408" name="radar_pos_y"></arg>
     <arg default="2.62" name="radar_pos_z"></arg>
-    <arg default="0" name="radar_yaw"></arg>
-    <arg default="0" name="radar_pitch"></arg>
-    <arg default="1.5708" name="radar_roll"></arg>
+    <arg default="1.5708" name="radar_yaw"></arg>
+    <arg default="1.5708" name="radar_pitch"></arg>
+    <arg default="0" name="radar_roll"></arg>
 
     <arg default="-2.989" name="boundary_box_x_min"></arg>
     <arg default="3.408" name="boundary_box_x_max"></arg>

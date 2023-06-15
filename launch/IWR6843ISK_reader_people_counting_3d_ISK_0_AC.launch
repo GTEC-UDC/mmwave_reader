@@ -23,7 +23,7 @@
     <arg default="0" name="radar_pos_x"></arg>
     <arg default="3.374" name="radar_pos_y"></arg>
     <arg default="2.337" name="radar_pos_z"></arg>
-    <arg default="1.5708" name="radar_yaw"></arg>
+    <arg default="0" name="radar_yaw"></arg>
     <arg default="0.0873" name="radar_pitch"></arg>
     <arg default="0" name="radar_roll"></arg>
 

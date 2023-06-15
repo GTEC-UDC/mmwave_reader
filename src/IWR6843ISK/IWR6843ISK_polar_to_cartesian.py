@@ -52,7 +52,8 @@ class IWR6843ISKPolarToCartesian(object):
         self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
         self.radar_tf = radar_tf
-        self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, radar_pitch, radar_roll)
+        #self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, radar_pitch, radar_roll)
+        self.rot_matrix = rot_helper.euler_to_rotation_matrix(1.5708, 0, 0)
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
