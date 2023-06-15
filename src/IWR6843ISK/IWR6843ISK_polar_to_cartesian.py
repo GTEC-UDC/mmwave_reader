@@ -41,6 +41,7 @@ from radar_msgs.msg import RadarScan, RadarReturn
 from sensor_msgs.msg import PointCloud2, PointField
 import sensor_msgs.point_cloud2 as pc2
 from geometry_msgs.msg import PointStamped, Point
+import tf2_ros
 
 
 class IWR6843ISKPolarToCartesian(object):
@@ -118,10 +119,12 @@ if __name__ == "__main__":
     elev_tilt = float(rospy.get_param('~elev_tilt'))
     radar_yaw = float(rospy.get_param('~radar_yaw'))
 
+    tf_buffer = tf2_ros.Buffer(rospy.Duration(2.0)) #tf buffer length
+    tf_listener = tf2_ros.TransformListener(tf_buffer)
     transform_radar_to_odom = tf_buffer.lookup_transform("odom",
                                 point_msg.header.frame_id, #source frame
                                 rospy.Time(0), #get the tf at first available time
-                                rospy.Duration(1.0))
+                                rospy.Duration(2.0))
 
     polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, publish_all_cartesian_topic, radar_id,elev_tilt, radar_yaw, transform_radar_to_odom)
 
