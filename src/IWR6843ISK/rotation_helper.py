@@ -23,17 +23,14 @@ def apply_rotation_matrix(point, rotation_matrix):
     return rotated_point_obj
 
 def euler_to_rotation_matrix(yaw, pitch, roll):
-    yaw_rad = math.radians(yaw)
-    pitch_rad = math.radians(pitch)
-    roll_rad = math.radians(roll)
 
     # Calculate the trigonometric values
-    cy = math.cos(yaw_rad)
-    sy = math.sin(yaw_rad)
-    cp = math.cos(pitch_rad)
-    sp = math.sin(pitch_rad)
-    cr = math.cos(roll_rad)
-    sr = math.sin(roll_rad)
+    cy = math.cos(yaw)
+    sy = math.sin(yaw)
+    cp = math.cos(pitch)
+    sp = math.sin(pitch)
+    cr = math.cos(roll)
+    sr = math.sin(roll)
 
     # Calculate the elements of the rotation matrix
     rotation_matrix = np.array([[cy * cp, cy * sp * sr - sy * cr, cy * sp * cr + sy * sr],
