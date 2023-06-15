@@ -116,8 +116,11 @@ if __name__ == "__main__":
     # Read parameters
     radar_topic = rospy.get_param('~radar_topic')
     publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
-    publish_all_cartesian_topic = rospy.get_param('~publish_all_cartesian_topic')
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
+
+    publish_all_cartesian_topic = rospy.get_param('~publish_all_cartesian_topic')
+    pub_cloud_all = rospy.Publisher(publish_all_cartesian_topic, PointCloud2, queue_size=100)
+
     radar_id = rospy.get_param('~radar_id')
     elev_tilt = float(rospy.get_param('~elev_tilt'))
     radar_yaw = float(rospy.get_param('~radar_yaw'))
@@ -129,7 +132,7 @@ if __name__ == "__main__":
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(2.0))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, publish_all_cartesian_topic, radar_id,elev_tilt, radar_yaw, transform_radar_to_odom)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id,elev_tilt, radar_yaw, transform_radar_to_odom)
 
 
 
