@@ -16,12 +16,16 @@
 
     <arg default="$(find gtec_mmwave_reader)/example_radar_configs/tracking_people_6m_6843AOP.cfg" name="config_file_path"></arg>
     
+    <!-- People Counting parameters (angles in degrees) -->
+    <arg default="90" name="elev_tilt"></arg>
+
+    <!-- Radar Pose within ROS (angles in radiands) -->
     <arg default="7.415" name="radar_pos_x"></arg>
     <arg default="3.408" name="radar_pos_y"></arg>
     <arg default="2.62" name="radar_pos_z"></arg>
-    <arg default="3.1416" name="radar_yaw"></arg>
-    <arg default="1.570796327" name="radar_pitch"></arg>
-    <arg default="0" name="radar_roll"></arg>
+    <arg default="0" name="radar_yaw"></arg>
+    <arg default="0" name="radar_pitch"></arg>
+    <arg default="1.5708" name="radar_roll"></arg>
 
     <arg default="-2.989" name="boundary_box_x_min"></arg>
     <arg default="3.408" name="boundary_box_x_max"></arg>
@@ -42,8 +46,10 @@
         <param name="publish_cloud_topic" value="$(arg publish_cloud_topic)"></param>
         <param name="publish_target_topic" value="$(arg publish_target_topic)"></param>
         <param name="sensor_height" value="$(arg radar_pos_z)"></param>
-        <param name="elev_tilt" value="$(arg radar_pitch)"></param>
+        <param name="elev_tilt" value="$(arg elev_tilt)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
+        <param name="radar_pitch" value="$(arg radar_pitch)"></param>
+        <param name="radar_roll" value="$(arg radar_roll)"></param>
         <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_all_target_topic" value="$(arg publish_all_target_topic)"></param>
         <param name="sensor_x" value="$(arg radar_pos_x)"></param>
@@ -79,7 +85,7 @@
         <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_cloud_topic" value="$(arg publish_cartesian_cloud_topic)"></param>
         <param name="publish_all_cartesian_topic" value="$(arg publish_all_cartesian_topic)"></param>
-        <param name="elev_tilt" value="$(arg radar_pitch)"></param>
+        <param name="radar_pitch" value="$(arg radar_pitch)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
         <param name="radar_roll" value="$(arg radar_roll)"></param>
     </node>

@@ -36,14 +36,15 @@ from geometry_msgs.msg import PointStamped, Point
 from tlv_parser import TLVParser 
 from tlv_uart_reader import TLVUartReader, LabId
 
+import rotation_helper as rot_helper
 
 class RadarPose(object):
-    def __init__(self, sensor_height, sensor_x, sensor_y, elev_tilt, radar_yaw):
+    def __init__(self, sensor_height, sensor_x, sensor_y, elev_tilt, radar_pitch, radar_yaw, radar_roll):
         self.sensor_height = sensor_height
         self.sensor_x = sensor_x
         self.sensor_y = sensor_y
         self.elev_tilt = elev_tilt
-        self.radar_yaw = radar_yaw
+        self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, radar_pitch, radar_roll)
 
 class BoundaryBox(object):
     def __init__(self, min_x, min_y, min_z, max_x, max_y, max_z):
@@ -153,10 +154,11 @@ class IWR6843ISKPeopleCountingReader(object):
                     
                     for n in range(numTargets):
                         if (n<8):
-                            target_point = Point(targets[1,n], targets[2,n], targets[3,n])
-                            # Axis change, to be used in ROS
-                            target_point_right = Point(math.cos(self.radar_pose.radar_yaw)*target_point.y, -1*math.cos(self.radar_pose.radar_yaw)*target_point.x, target_point.z)
-                            target_pos = PointStamped(header_target, target_point_right)
+                            target_point = rot_helper.Point(targets[1,n], targets[2,n], targets[3,n])
+
+                            # Point rotated according to the radar frame    
+                            point_rotated = rot_helper.apply_rotation_matrix(target_point, self.radar_pose.rot_matrix)
+                            target_pos = PointStamped(header_target, Point(point_rotated.x, point_rotated.y, point_rotated.z))
                             self.publishers_target[n].publish(target_pos)
                             self.publish_all_target_topic.publish(target_pos)
 
@@ -175,7 +177,11 @@ if __name__ == "__main__":
     sensor_x = float(rospy.get_param('~sensor_x'))
     sensor_y = float(rospy.get_param('~sensor_y'))
     elev_tilt = float(rospy.get_param('~elev_tilt'))
+
+    radar_pitch = float(rospy.get_param('~radar_pitch'))
     radar_yaw = float(rospy.get_param('~radar_yaw'))
+    radar_roll = float(rospy.get_param('~radar_roll'))
+
     radar_id = rospy.get_param('~radar_id')
     publish_all_target_topic = rospy.get_param('~publish_all_target_topic')
 
@@ -189,11 +195,11 @@ if __name__ == "__main__":
     boundary_box = BoundaryBox(boundary_box_x_min, boundary_box_y_min, boundary_box_z_min, boundary_box_x_max, boundary_box_y_max, boundary_box_z_max)
 
 
-    #elev_tilt is in radians, the ti tracker needs it in degrees
-    elev_tilt = abs(elev_tilt) * 180.0/math.pi
+    #elev_tilt is degrees
+    elev_tilt = 5
 
 
-    radar_pose = RadarPose(sensor_height, sensor_x, sensor_y, elev_tilt, radar_yaw)
+    radar_pose = RadarPose(sensor_height, sensor_x, sensor_y, elev_tilt, radar_pitch, radar_yaw, radar_roll)
 
 
     pub_radar = rospy.Publisher(publish_radar_topic, RadarScan, queue_size=100)

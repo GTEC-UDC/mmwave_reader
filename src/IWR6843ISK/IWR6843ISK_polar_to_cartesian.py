@@ -47,15 +47,12 @@ import rotation_helper as rot_helper
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, elev_tilt, radar_yaw, radar_roll, radar_tf):
+    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf):
         self.publisher_cloud = publisher_cloud
         self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
-        self.elev_tilt = elev_tilt
-        self.radar_yaw = radar_yaw
         self.radar_tf = radar_tf
-        self.radar_roll = radar_roll
-        self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, elev_tilt, radar_roll)
+        self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, radar_pitch, radar_roll)
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
@@ -127,7 +124,7 @@ if __name__ == "__main__":
     pub_cloud_all = rospy.Publisher(publish_all_cartesian_topic, PointCloud2, queue_size=100)
 
     radar_id = rospy.get_param('~radar_id')
-    elev_tilt = float(rospy.get_param('~elev_tilt'))
+    radar_pitch = float(rospy.get_param('~radar_pitch'))
     radar_yaw = float(rospy.get_param('~radar_yaw'))
     radar_roll = float(rospy.get_param('~radar_roll'))
 
@@ -138,7 +135,7 @@ if __name__ == "__main__":
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(2.0))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, elev_tilt, radar_yaw, radar_roll, transform_radar_to_odom)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom)
 
 
 

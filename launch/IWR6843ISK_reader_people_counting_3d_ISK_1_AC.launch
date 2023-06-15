@@ -16,10 +16,15 @@
 
     <arg default="$(find gtec_mmwave_reader)/example_radar_configs/people_counting_14m_6843ISK.cfg" name="config_file_path"></arg>
     
+
+    <!-- People Counting parameters (angles in degrees) -->
+    <arg default="5" name="elev_tilt"></arg>
+
+    <!-- Radar Pose within ROS (angles in radiands) -->
     <arg default="12.46" name="radar_pos_x"></arg>
     <arg default="3.624" name="radar_pos_y"></arg>
     <arg default="2.335" name="radar_pos_z"></arg>
-    <arg default="-3.141592654" name="radar_yaw"></arg>
+    <arg default="-1.5708" name="radar_yaw"></arg>
     <arg default="0.0873" name="radar_pitch"></arg>
     <arg default="0" name="radar_roll"></arg>
 
@@ -44,6 +49,8 @@
         <param name="sensor_height" value="$(arg radar_pos_z)"></param>
         <param name="elev_tilt" value="$(arg radar_pitch)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
+        <param name="radar_pitch" value="$(arg radar_pitch)"></param>
+        <param name="radar_roll" value="$(arg radar_roll)"></param>
         <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_all_target_topic" value="$(arg publish_all_target_topic)"></param>
         <param name="sensor_x" value="$(arg radar_pos_x)"></param>
@@ -77,8 +84,8 @@
         <param name="radar_id" value="$(arg radar_id)"></param>
         <param name="publish_cloud_topic" value="$(arg publish_cartesian_cloud_topic)"></param>
         <param name="publish_all_cartesian_topic" value="$(arg publish_all_cartesian_topic)"></param>
-        <param name="elev_tilt" value="$(arg radar_pitch)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
+        <param name="radar_pitch" value="$(arg radar_pitch)"></param>
         <param name="radar_roll" value="$(arg radar_roll)"></param>
     </node>
 
