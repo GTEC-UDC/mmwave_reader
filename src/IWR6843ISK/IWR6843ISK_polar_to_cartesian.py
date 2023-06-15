@@ -61,7 +61,7 @@ class IWR6843ISKPolarToCartesian(object):
         cartesianPoints = np.zeros((numPoints,5))
         cartesianPointsTransformed = np.zeros((numPoints,5))
         for i in range(numPoints):
-            cartesianPoints[i],cartesianPointsTransformed[i]  = self.polar_to_cartesian(polarPoints[i], self.radar_tf)
+            (cartesianPoints[i], cartesianPointsTransformed[i])  = self.polar_to_cartesian(polarPoints[i], self.radar_tf)
 
         
         header_point_cloud = Header()
@@ -103,7 +103,7 @@ class IWR6843ISKPolarToCartesian(object):
         point_msg.point = Point(x_right,y_right,z)
 
         point_tf = tf2_geometry_msgs.do_transform_point(point_msg, odom_transform)
-        cartesianPointTf = [point_tf.point.x, point_tf.point.y, point_tf.point.z, polarPoint.amplitude, polarPoint.doppler_velocity]
+        cartesianPointTF = [point_tf.point.x, point_tf.point.y, point_tf.point.z, polarPoint.amplitude, polarPoint.doppler_velocity]
 
         return (cartesianPoint, cartesianPointTF)
 
