@@ -103,7 +103,7 @@ class IWR6843ISKPolarToCartesian(object):
         point_msg.point = Point(x_right,y_right,z)
 
         point_tf = tf2_geometry_msgs.do_transform_point(point_msg, odom_transform)
-        cartesianPointTf = [point_tf.x, point_tf.y, point_tf.z, polarPoint.amplitude, polarPoint.doppler_velocity]
+        cartesianPointTf = [point_tf.point.x, point_tf.point.y, point_tf.point.z, polarPoint.amplitude, polarPoint.doppler_velocity]
 
         return (cartesianPoint, cartesianPointTF)
 
