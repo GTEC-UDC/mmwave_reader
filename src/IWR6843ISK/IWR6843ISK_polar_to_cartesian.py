@@ -47,14 +47,16 @@ import rotation_helper as rot_helper
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf, ignore_elevation):
+    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf, radar_z, use_fixed_z, fixed_z):
         self.publisher_cloud = publisher_cloud
         self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
         self.radar_tf = radar_tf
         self.rot_matrix = rot_helper.euler_to_rotation_matrix(-1*radar_yaw, radar_pitch, radar_roll)
         self.rot_matrix_radar_to_ros = rot_helper.euler_to_rotation_matrix(-1.5708, 0, 0)
-        self.ignore_elevation = ignore_elevation
+        self.use_fixed_z = use_fixed_z
+        self.fixed_z = fixed_z
+        self.radar_z = radar_z
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
@@ -87,8 +89,10 @@ class IWR6843ISKPolarToCartesian(object):
         x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
 
-        if (self.ignore_elevation==True):
-            z=0
+        if (self.use_fixed_z==True):
+            point_to_radar_distance = math.sqrt(polarPoint.range*polarPoint.range - y*y - x*x)
+            point_height = self.radar_z - point_to_radar_distance
+            z = point_height - self.fixed_z
         else:
             z = polarPoint.range*math.sin(polarPoint.elevation)
 
@@ -138,7 +142,15 @@ if __name__ == "__main__":
     radar_yaw = float(rospy.get_param('~radar_yaw'))
     radar_roll = float(rospy.get_param('~radar_roll'))
 
-    ignore_elevation = rospy.get_param('~ignore_elevation')
+    use_fixed_z = rospy.get_param('~use_fixed_z')
+
+    fixed_z = 0
+    if (use_fixed_z==True):
+        fixed_z = float(rospy.get_param('~fixed_z'))
+
+    radar_z = float(rospy.get_param('~radar_z'))
+    
+
 
     tf_buffer = tf2_ros.Buffer(rospy.Duration(2.0)) #tf buffer length
     tf_listener = tf2_ros.TransformListener(tf_buffer)
@@ -147,7 +159,7 @@ if __name__ == "__main__":
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(2.0))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom, ignore_elevation)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom, radar_z, use_fixed_z, fixed_z)
 
 
 
