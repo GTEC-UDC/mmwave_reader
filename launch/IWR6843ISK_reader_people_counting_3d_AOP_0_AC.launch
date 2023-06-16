@@ -93,7 +93,7 @@
         <param name="radar_roll" value="$(arg radar_roll)"></param>
         <param name="use_fixed_z" value="$(arg use_fixed_z)"></param>
         <param name="fixed_z" value="$(arg fixed_z)"></param>
-        <param name="sensor_height" value="$(arg radar_pos_z)"></param>
+        <param name="radar_z" value="$(arg radar_pos_z)"></param>
     </node>
 
 </launch>
