@@ -47,11 +47,12 @@ import rotation_helper as rot_helper
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf, radar_z, use_fixed_z, fixed_z):
+    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf_radar_to_odom, radar_tf_odom_to_radar, radar_z, use_fixed_z, fixed_z):
         self.publisher_cloud = publisher_cloud
         self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
-        self.radar_tf = radar_tf
+        self.radar_tf_radar_to_odom = radar_tf_radar_to_odom
+        self.radar_tf_odom_to_radar = radar_tf_odom_to_radar
         self.rot_matrix = rot_helper.euler_to_rotation_matrix(-1*radar_yaw, radar_pitch, radar_roll)
         self.rot_matrix_radar_to_ros = rot_helper.euler_to_rotation_matrix(-1.5708, 0, 0)
         self.use_fixed_z = use_fixed_z
@@ -64,7 +65,7 @@ class IWR6843ISKPolarToCartesian(object):
         cartesianPoints = np.zeros((numPoints,5))
         cartesianPointsTransformed = np.zeros((numPoints,5))
         for i in range(numPoints):
-            (cartesianPoints[i], cartesianPointsTransformed[i])  = self.polar_to_cartesian(polarPoints[i], self.radar_tf)
+            (cartesianPoints[i], cartesianPointsTransformed[i])  = self.polar_to_cartesian(polarPoints[i], self.radar_tf_radar_to_odom, self.radar_tf_odom_to_radar)
 
         
         header_point_cloud = Header()
@@ -84,17 +85,21 @@ class IWR6843ISKPolarToCartesian(object):
         point_cloud_2_tf = pc2.create_cloud(header_point_cloud, fields_point_cloud, cartesianPointsTransformed)
         self.publisher_cloud_all.publish(point_cloud_2_tf)
 
-    def polar_to_cartesian(self, polarPoint, odom_transform):
+    def polar_to_cartesian(self, polarPoint, odom_transform, radar_transform):
         
         x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
 
         if (self.use_fixed_z==True):
-            point_msg_fx = PointStamped()
-            point_msg_fx.point = Point(x, y, z)
-            point_tf_fx = tf2_geometry_msgs.do_transform_point(point_msg_fx, odom_transform)
-            
-            z =  self.fixed_z - point_tf_fx.point.z
+            point_msg_in_odom = PointStamped()
+            point_msg_in_odom.point = Point(x, y, 0)
+            point_in_odom = tf2_geometry_msgs.do_transform_point(point_msg_in_odom, odom_transform)
+
+            point_msg_in_radar = PointStamped()
+            point_msg_in_radar.point = Point(point_in_odom.x, point_in_odom.y, self.fixed_z)
+            point_in_radar = tf2_geometry_msgs.do_transform_point(point_msg_in_radar, radar_transform)
+
+            z =  point_in_radar.z
         else:
             z = polarPoint.range*math.sin(polarPoint.elevation)
 
@@ -161,7 +166,12 @@ if __name__ == "__main__":
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(2.0))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom, radar_z, use_fixed_z, fixed_z)
+    transform_odom_to_radar = tf_buffer.lookup_transform(radar_id,
+                                "odom", #source frame
+                                rospy.Time(0), #get the tf at first available time
+                                rospy.Duration(2.0))
+
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom, transform_odom_to_radar, radar_z, use_fixed_z, fixed_z)
 
 
 
