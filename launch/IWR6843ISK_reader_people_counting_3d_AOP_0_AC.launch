@@ -20,6 +20,8 @@
     <arg default="90" name="elev_tilt"></arg>
 
     <!-- Radar Pose within ROS (angles in radiands) -->
+    <arg default="false" name="ignore_elevation"></arg>
+
     <arg default="7.415" name="radar_pos_x"></arg>
     <arg default="3.408" name="radar_pos_y"></arg>
     <arg default="2.62" name="radar_pos_z"></arg>
@@ -88,6 +90,7 @@
         <param name="radar_pitch" value="$(arg radar_pitch)"></param>
         <param name="radar_yaw" value="$(arg radar_yaw)"></param>
         <param name="radar_roll" value="$(arg radar_roll)"></param>
+        <param name="ignore_elevation" value="$(arg ignore_elevation)"></param>
     </node>
 
 </launch>
