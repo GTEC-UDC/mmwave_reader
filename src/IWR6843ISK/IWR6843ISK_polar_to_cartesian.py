@@ -92,7 +92,7 @@ class IWR6843ISKPolarToCartesian(object):
         if (self.use_fixed_z==True):
             point_to_radar_distance = math.sqrt(polarPoint.range*polarPoint.range - y*y - x*x)
             point_height = self.radar_z - point_to_radar_distance
-            z = point_height - self.fixed_z
+            z =  self.fixed_z - point_height
         else:
             z = polarPoint.range*math.sin(polarPoint.elevation)
 
