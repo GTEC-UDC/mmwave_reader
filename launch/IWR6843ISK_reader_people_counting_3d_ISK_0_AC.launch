@@ -34,7 +34,7 @@
     <arg default="13.5" name="boundary_box_y_max"></arg>
 
     <arg default="0" name="boundary_box_z_min"></arg> 
-    <arg default="4.2" name="boundary_box_z_max"></arg>
+    <arg default="2.4" name="boundary_box_z_max"></arg>
 
     <!-- Nodes -->
 
