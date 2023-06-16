@@ -52,8 +52,8 @@ class IWR6843ISKPolarToCartesian(object):
         self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
         self.radar_tf = radar_tf
-        #self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, radar_pitch, radar_roll)
-        self.rot_matrix = rot_helper.euler_to_rotation_matrix(-1.5708, 0, 0)
+        self.rot_matrix = rot_helper.euler_to_rotation_matrix(radar_yaw, radar_pitch, radar_roll)
+        self.rot_matrix_radar_to_ros = rot_helper.euler_to_rotation_matrix(-1.5708, 0, 0)
 
     def radar_listener(self, radarScan):
         polarPoints = radarScan.returns
@@ -88,7 +88,9 @@ class IWR6843ISKPolarToCartesian(object):
         z = polarPoint.range*math.sin(polarPoint.elevation)
 
         print(f'Before rot: {x},{y},{z}')
-        point_rotated = rot_helper.apply_rotation_matrix(rot_helper.Point(x,y,z), self.rot_matrix)
+        point_corrected= rot_helper.apply_rotation_matrix(rot_helper.Point(x,y,z), self.rot_matrix_radar_to_ros)
+        print(f'After correct rot: {point_corrected.x},{point_corrected.y},{point_corrected.z}')
+        point_rotated= rot_helper.apply_rotation_matrix(point_corrected, self.rot_matrix)
         print(f'After rot: {point_rotated.x},{point_rotated.y},{point_rotated.z}')
         cartesianPoint = [point_rotated.x, point_rotated.y, point_rotated.z, polarPoint.amplitude, polarPoint.doppler_velocity]
 
