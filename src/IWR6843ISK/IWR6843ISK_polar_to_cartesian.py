@@ -87,8 +87,8 @@ class IWR6843ISKPolarToCartesian(object):
         # y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         # z = polarPoint.range*math.sin(polarPoint.elevation)
 
-        x = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
-        y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
+        x = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
+        y = polarPoint.range*math.cos(polarPoint.elevation)*math.sin(polarPoint.azimuth)
         z = polarPoint.range*math.sin(polarPoint.elevation)
 
         point_rotated = rot_helper.apply_rotation_matrix(rot_helper.Point(x,y,z), self.rot_matrix)
