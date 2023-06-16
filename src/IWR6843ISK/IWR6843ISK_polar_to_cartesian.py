@@ -87,7 +87,9 @@ class IWR6843ISKPolarToCartesian(object):
         y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
         z = polarPoint.range*math.sin(polarPoint.elevation)
 
+        print(f'Before rot: {x},{y},{z}')
         point_rotated = rot_helper.apply_rotation_matrix(rot_helper.Point(x,y,z), self.rot_matrix)
+        print(f'After rot: {point_rotated.x},{point_rotated.y},{point_rotated.z}')
         cartesianPoint = [point_rotated.x, point_rotated.y, point_rotated.z, polarPoint.amplitude, polarPoint.doppler_velocity]
 
         # elevation_with_tilt = self.elev_tilt - polarPoint.elevation
