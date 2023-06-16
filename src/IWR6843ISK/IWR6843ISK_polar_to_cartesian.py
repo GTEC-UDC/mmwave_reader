@@ -107,7 +107,7 @@ class IWR6843ISKPolarToCartesian(object):
 
         #We return the point transformed to the Odom space (to fuse differente radars)
         point_msg = PointStamped()
-        point_msg.point = Point(point_rotated.x, point_rotated.y, point_rotated.z)
+        point_msg.point = Point(point_corrected.x, point_corrected.y, point_corrected.z)
 
         point_tf = tf2_geometry_msgs.do_transform_point(point_msg, odom_transform)
         cartesianPointTF = [point_tf.point.x, point_tf.point.y, point_tf.point.z, polarPoint.amplitude, polarPoint.doppler_velocity]
