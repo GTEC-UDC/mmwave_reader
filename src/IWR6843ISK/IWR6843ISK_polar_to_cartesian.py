@@ -96,10 +96,10 @@ class IWR6843ISKPolarToCartesian(object):
             point_in_odom = tf2_geometry_msgs.do_transform_point(point_msg_in_odom, odom_transform)
 
             point_msg_in_radar = PointStamped()
-            point_msg_in_radar.point = Point(point_in_odom.x, point_in_odom.y, self.fixed_z)
+            point_msg_in_radar.point = Point(point_in_odom.point.x, point_in_odom.point.y, self.fixed_z)
             point_in_radar = tf2_geometry_msgs.do_transform_point(point_msg_in_radar, radar_transform)
 
-            z =  point_in_radar.z
+            z =  point_in_radar.point.z
         else:
             z = polarPoint.range*math.sin(polarPoint.elevation)
 
