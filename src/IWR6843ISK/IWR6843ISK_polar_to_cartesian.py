@@ -90,9 +90,11 @@ class IWR6843ISKPolarToCartesian(object):
         y = polarPoint.range*math.cos(polarPoint.elevation)*math.cos(polarPoint.azimuth)
 
         if (self.use_fixed_z==True):
-            point_to_radar_distance = math.sqrt(polarPoint.range*polarPoint.range - y*y - x*x)
-            point_height = self.radar_z - point_to_radar_distance
-            z =  self.fixed_z - point_height
+            point_msg_fx = PointStamped()
+            point_msg_fx.point = Point(x, y, z)
+            point_tf_fx = tf2_geometry_msgs.do_transform_point(point_msg_fx, odom_transform)
+            
+            z =  self.fixed_z - point_tf_fx.point.z
         else:
             z = polarPoint.range*math.sin(polarPoint.elevation)
 
