@@ -151,16 +151,32 @@ class IWR6843ISKPeopleCountingReader(object):
                     header_target = Header()
                     header_target.stamp = current_time
                     header_target.frame_id = "target_" + self.radar_id
+
+                    targets_cloud_points = []
+
                     
                     for n in range(numTargets):
-                        if (n<8):
-                            target_point = rot_helper.Point(targets[1,n], targets[2,n], targets[3,n])
+                        target_point = rot_helper.Point(targets[1,n], targets[2,n], targets[3,n])
 
-                            # Point rotated according to the radar frame    
-                            point_rotated = rot_helper.apply_rotation_matrix(target_point, self.radar_pose.rot_matrix)
-                            target_pos = PointStamped(header_target, Point(point_rotated.x, point_rotated.y, point_rotated.z))
-                            self.publishers_target[n].publish(target_pos)
-                            self.publish_all_target_topic.publish(target_pos)
+                        # Point rotated according to the radar frame    
+                        point_rotated = rot_helper.apply_rotation_matrix(target_point, self.radar_pose.rot_matrix)
+                        target_pos = PointStamped(header_target, Point(point_rotated.x, point_rotated.y, point_rotated.z))
+                        self.publishers_target[n].publish(target_pos)
+                        targets_cloud_points.append([point_rotated.x, point_rotated.y, point_rotated.z])
+
+                    header_target_cloud = Header()
+                    header_target_cloud.stamp = current_time
+                    header_target_cloud.frame_id = "odom"
+
+                    targets_fields_cloud = [
+                        PointField('x', 0, PointField.FLOAT32, 1),
+                        PointField('y', 4, PointField.FLOAT32, 1),
+                        PointField('z', 8, PointField.FLOAT32, 1),
+                    ]
+
+                    targets_cloud = pc2.create_cloud(
+                        header_target_cloud, targets_fields_cloud, targets_cloud_points)    
+                    self.publish_all_target_topic.publish(targets_cloud)
 
 if __name__ == "__main__":
 
@@ -209,7 +225,7 @@ if __name__ == "__main__":
     for n in range(8):
         pubs_target.append(rospy.Publisher(str(publish_target_topic)+'/'+str(n), PointStamped, queue_size=100))
 
-    pub_all_targets = rospy.Publisher(str(publish_all_target_topic), PointStamped, queue_size=100)
+    pub_all_targets = rospy.Publisher(str(publish_all_target_topic), PointCloud2, queue_size=100)
     reader = IWR6843ISKPeopleCountingReader(uart_port, data_port, config_file_path, pub_radar, pubs_target, pub_cloud, radar_pose, boundary_box, radar_id, pub_all_targets)
 
     print("=========== GTEC mmWave IWR6843ISK People Counting Reader ============")
