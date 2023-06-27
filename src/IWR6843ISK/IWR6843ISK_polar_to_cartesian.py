@@ -84,7 +84,7 @@ class IWR6843ISKPolarToCartesian(object):
 
         header_point_cloud.frame_id = "odom"
         point_cloud_2_tf = pc2.create_cloud(header_point_cloud, fields_point_cloud, cartesianPointsTransformed)
-        self.self.publisher_cloud_in_odom_frame.publish(point_cloud_2_tf)
+        self.publisher_cloud_in_odom_frame.publish(point_cloud_2_tf)
         self.publisher_cloud_all.publish(point_cloud_2_tf)
 
     def polar_to_cartesian(self, polarPoint, odom_transform, radar_transform):
