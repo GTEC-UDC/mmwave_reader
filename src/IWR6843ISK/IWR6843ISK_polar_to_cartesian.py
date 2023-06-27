@@ -47,8 +47,9 @@ import rotation_helper as rot_helper
 
 class IWR6843ISKPolarToCartesian(object):
 
-    def __init__(self, publisher_cloud, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf_radar_to_odom, radar_tf_odom_to_radar, radar_z, use_fixed_z, fixed_z):
+    def __init__(self, publisher_cloud, publisher_cloud_in_odom_frame, publisher_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, radar_tf_radar_to_odom, radar_tf_odom_to_radar, radar_z, use_fixed_z, fixed_z):
         self.publisher_cloud = publisher_cloud
+        self.publisher_cloud_in_odom_frame = publisher_cloud_in_odom_frame
         self.publisher_cloud_all = publisher_cloud_all
         self.radar_id = radar_id
         self.radar_tf_radar_to_odom = radar_tf_radar_to_odom
@@ -83,6 +84,7 @@ class IWR6843ISKPolarToCartesian(object):
 
         header_point_cloud.frame_id = "odom"
         point_cloud_2_tf = pc2.create_cloud(header_point_cloud, fields_point_cloud, cartesianPointsTransformed)
+        self.self.publisher_cloud_in_odom_frame.publish(point_cloud_2_tf)
         self.publisher_cloud_all.publish(point_cloud_2_tf)
 
     def polar_to_cartesian(self, polarPoint, odom_transform, radar_transform):
@@ -141,6 +143,10 @@ if __name__ == "__main__":
     publish_cloud_topic = rospy.get_param('~publish_cloud_topic')
     pub_cloud = rospy.Publisher(publish_cloud_topic, PointCloud2, queue_size=100)
 
+
+    publish_cloud_topic_in_odom_frame = rospy.get_param('~publish_cloud_topic_in_odom_frame')
+    pub_cloud_in_odom_frame = rospy.Publisher(publish_cloud_topic_in_odom_frame, PointCloud2, queue_size=100)
+
     publish_all_cartesian_topic = rospy.get_param('~publish_all_cartesian_topic')
     pub_cloud_all = rospy.Publisher(publish_all_cartesian_topic, PointCloud2, queue_size=100)
 
@@ -171,7 +177,7 @@ if __name__ == "__main__":
                                 rospy.Time(0), #get the tf at first available time
                                 rospy.Duration(2.0))
 
-    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom, transform_odom_to_radar, radar_z, use_fixed_z, fixed_z)
+    polarToCartesian = IWR6843ISKPolarToCartesian(pub_cloud, pub_cloud_in_odom_frame, pub_cloud_all, radar_id, radar_pitch, radar_yaw, radar_roll, transform_radar_to_odom, transform_odom_to_radar, radar_z, use_fixed_z, fixed_z)
 
 
 
