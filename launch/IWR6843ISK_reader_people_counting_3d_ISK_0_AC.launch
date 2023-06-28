@@ -15,7 +15,7 @@
 
     <!-- Radar device config-->
 
-    <arg default="$(find gtec_mmwave_reader)/example_radar_configs/people_counting_14m_6843ISK.cfg" name="config_file_path"></arg>
+    <arg default="$(find gtec_mmwave_reader)/example_radar_configs/tracking_people_6m_6843ISK.cfg" name="config_file_path"></arg>
     
     <!-- People Counting parameters (angles in degrees) -->
     <arg default="5" name="elev_tilt"></arg>
