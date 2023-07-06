@@ -1,0 +1,24 @@
+<launch>
+    <arg default="/gtec/mmwave/isk_0/cartesian/threshold_filter" name="input_topic_0"></arg>
+    <arg default="/gtec/mmwave/isk_0/cartesian/buffer_filter" name="output_topic_0"></arg>
+    <arg default="/gtec/mmwave/isk_1/cartesian/threshold_filter" name="input_topic_1"></arg>
+    <arg default="/gtec/mmwave/isk_1/cartesian/buffer_filter" name="output_topic_1"></arg>
+    <arg default="/gtec/mmwave/aop_0/cartesian/threshold_filter" name="input_topic_2"></arg>
+    <arg default="/gtec/mmwave/aop_0/cartesian/buffer_filter" name="output_topic_2"></arg>
+    <arg default="0.2" name="grid_size"></arg>
+    <node name="BufferFilter_ISK0" output="screen" pkg="gtec_mmwave_reader" type="buffer_filter.py">
+        <param name="input_topic" value="$(arg input_topic_0)"></param>
+        <param name="output_topic" value="$(arg output_topic_0)"></param>
+        <param name="grid_size" value="$(arg grid_size)"></param>
+    </node>
+    <node name="BufferFilter_ISK1" output="screen" pkg="gtec_mmwave_reader" type="buffer_filter.py">
+        <param name="input_topic" value="$(arg input_topic_1)"></param>
+        <param name="output_topic" value="$(arg output_topic_1)"></param>
+        <param name="grid_size" value="$(arg grid_size)"></param>
+    </node>
+    <node name="BufferFilter_AOP0" output="screen" pkg="gtec_mmwave_reader" type="buffer_filter.py">
+        <param name="input_topic" value="$(arg input_topic_2)"></param>
+        <param name="output_topic" value="$(arg output_topic_2)"></param>
+        <param name="grid_size" value="$(arg grid_size)"></param>
+    </node>
+</launch>

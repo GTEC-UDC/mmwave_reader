@@ -1,0 +1,54 @@
+<launch>
+
+    <arg default="/gtec/mmwave/isk_0/cartesian/odom" name="input_topic_0"></arg>
+    <arg default="/gtec/mmwave/isk_0/cartesian/threshold_filter" name="output_topic_0"></arg>
+
+    <arg default="/gtec/mmwave/isk_1/cartesian/odom" name="input_topic_1"></arg>
+    <arg default="/gtec/mmwave/isk_1/cartesian/threshold_filter" name="output_topic_1"></arg>
+
+    <arg default="/gtec/mmwave/aop_0/cartesian/odom" name="input_topic_2"></arg>
+    <arg default="/gtec/mmwave/aop_0/cartesian/threshold_filter" name="output_topic_2"></arg>
+
+    <arg default="true" name="do_filter_snr"></arg>
+    <arg default="true" name="do_filter_doppler"></arg> 
+
+    <arg default="7.0" name="min_snr"></arg>
+    <arg default="100.0" name="max_snr"></arg>
+
+    <arg default="0.0" name="min_doppler"></arg> <!-- Doppler filtered using abs value -->
+    <arg default="0.75" name="max_doppler"></arg> <!-- Doppler filtered using abs value -->
+    
+    <node name="ThresholdFilter_ISK0" output="screen" pkg="gtec_mmwave_reader" type="threshold_filter.py">
+        <param name="raw_measurements_topic" value="$(arg input_topic_0)"></param>
+        <param name="publish_filtered_topic" value="$(arg output_topic_0)"></param>
+        <param name="do_filter_snr" value="$(arg do_filter_snr)"></param>
+        <param name="do_filter_doppler" value="$(arg do_filter_doppler)"></param>
+        <param name="min_snr" value="$(arg min_snr)"></param>
+        <param name="max_snr" value="$(arg max_snr)"></param>
+        <param name="min_doppler" value="$(arg min_doppler)"></param>
+        <param name="max_doppler" value="$(arg max_doppler)"></param>
+    </node>
+
+    <node name="ThresholdFilter_ISK1" output="screen" pkg="gtec_mmwave_reader" type="threshold_filter.py">
+        <param name="raw_measurements_topic" value="$(arg input_topic_1)"></param>
+        <param name="publish_filtered_topic" value="$(arg output_topic_1)"></param>
+        <param name="do_filter_snr" value="$(arg do_filter_snr)"></param>
+        <param name="do_filter_doppler" value="$(arg do_filter_doppler)"></param>
+        <param name="min_snr" value="$(arg min_snr)"></param>
+        <param name="max_snr" value="$(arg max_snr)"></param>
+        <param name="min_doppler" value="$(arg min_doppler)"></param>
+        <param name="max_doppler" value="$(arg max_doppler)"></param>
+    </node>
+
+    <node name="ThresholdFilter_AOP0" output="screen" pkg="gtec_mmwave_reader" type="threshold_filter.py">
+        <param name="raw_measurements_topic" value="$(arg input_topic_2)"></param>
+        <param name="publish_filtered_topic" value="$(arg output_topic_2)"></param>
+        <param name="do_filter_snr" value="$(arg do_filter_snr)"></param>
+        <param name="do_filter_doppler" value="$(arg do_filter_doppler)"></param>
+        <param name="min_snr" value="$(arg min_snr)"></param>
+        <param name="max_snr" value="$(arg max_snr)"></param>
+        <param name="min_doppler" value="$(arg min_doppler)"></param>
+        <param name="max_doppler" value="$(arg max_doppler)"></param>
+    </node>
+
+</launch>
