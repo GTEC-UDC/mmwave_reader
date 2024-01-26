@@ -12,8 +12,8 @@
     <arg default="true" name="do_filter_snr"></arg>
     <arg default="true" name="do_filter_doppler"></arg> 
 
-    <arg default="5.0" name="min_snr"></arg>
-    <arg default="102.0" name="max_snr"></arg>
+    <arg default="6.0" name="min_snr"></arg>
+    <arg default="100.0" name="max_snr"></arg>
 
     <arg default="0.0" name="min_doppler"></arg> <!-- Doppler filtered using abs value -->
     <arg default="1.5" name="max_doppler"></arg> <!-- Doppler filtered using abs value -->
