@@ -1,3 +1,17 @@
+"""
+TLV Parser for IWR6843ISK Radar Sensor
+
+This module provides functionality to parse TLV (Type-Length-Value) messages from the IWR6843ISK radar sensor.
+It handles different types of data including point clouds, radar cubes, and target tracking information.
+
+The parser supports two main modes:
+1. OutOfBoxDemo: For basic radar functionality
+2. PeopleCounting3D: For advanced 3D people counting applications
+
+Author: GTEC
+Date: 2024
+"""
+
 import struct
 import sys
 from regex import D
@@ -6,12 +20,46 @@ import binascii
 import time
 import numpy as np
 import math
-import fft
+import gtec_mmwave_reader.IWR6843ISK.fft
+
 from operator import add
-from tlv_uart_reader import LabId
+from gtec_mmwave_reader.IWR6843ISK.tlv_uart_reader import LabId
 
 class TLVParser():
-    def __init__(self,labType:LabId, num_azimuth_antennas:int, num_range_bins:int, num_doppler_bins:int):
+    """
+    Parser for TLV (Type-Length-Value) messages from IWR6843ISK radar sensor.
+    
+    This class handles the parsing of different types of radar data including:
+    - Point cloud data
+    - Radar cube data
+    - Doppler heatmap data
+    - Target tracking information
+    - 3D people counting data
+    
+    Attributes:
+        labType (LabId): Type of lab configuration (OutOfBoxDemo or PeopleCounting3D)
+        maxPoints (int): Maximum number of points to process
+        num_azimuth_antennas (int): Number of azimuth antennas
+        num_range_bins (int): Number of range bins
+        num_doppler_bins (int): Number of doppler bins
+        pcPolar (numpy.ndarray): Polar coordinate point cloud data
+        pcBufPing (numpy.ndarray): Cartesian coordinate point cloud data
+        targetBufPing (numpy.ndarray): Target tracking information
+        radarCube (list): Radar cube data
+        rangeFFT (list): Range FFT data
+        rangeDoppler (list): Doppler heatmap data
+    """
+    
+    def __init__(self, labType:LabId, num_azimuth_antennas:int, num_range_bins:int, num_doppler_bins:int):
+        """
+        Initialize the TLV parser with radar configuration parameters.
+        
+        Args:
+            labType (LabId): Type of lab configuration (OutOfBoxDemo or PeopleCounting3D)
+            num_azimuth_antennas (int): Number of azimuth antennas
+            num_range_bins (int): Number of range bins
+            num_doppler_bins (int): Number of doppler bins
+        """
         self.labType = labType
         self.maxPoints = 1150
         self.num_azimuth_antennas = num_azimuth_antennas
@@ -40,7 +88,7 @@ class TLVParser():
         self.savefHist = 0
         self.saveBinary = 0
         self.saveTextFile = 0
-        self.fHistRT = np.empty((100,1), dtype=np.object)
+        self.fHistRT = np.empty((100,1), dtype=object)
         self.plotDimension = 0
         self.getUnique = 0
         self.CaponEC = 0
@@ -53,6 +101,30 @@ class TLVParser():
 
 
     def parseMsg(self, dataIn, numTLVs, tlvHeaderLength, numDetectedObj):
+        """
+        Parse a complete radar message containing multiple TLVs.
+        
+        Args:
+            dataIn (bytes): Raw message data
+            numTLVs (int): Number of TLVs in the message
+            tlvHeaderLength (int): Length of TLV header
+            numDetectedObj (int): Number of detected objects
+            
+        Returns:
+            tuple: Contains various radar data including:
+                - pcPolar: Polar coordinate point cloud
+                - pcBufPing: Cartesian coordinate point cloud
+                - targetBufPing: Target tracking information
+                - indexes: Target association indexes
+                - numDetectedObj: Number of detected objects
+                - numDetectedTarget: Number of detected targets
+                - frameNum: Frame number
+                - fail: Error flag
+                - classifierOutput: Classification results
+                - radarCube: Radar cube data
+                - rangeFFT: Range FFT data
+                - rangeDoppler: Doppler heatmap data
+        """
         if (self.labType==LabId.OutOfBoxDemo):
             self.parseOutOfBoxMsg(dataIn, numTLVs, tlvHeaderLength, numDetectedObj)
             self.numDetectedObj = numDetectedObj
@@ -94,6 +166,7 @@ class TLVParser():
             for i in range(numTLVs):
                 try:
                     tlvType, tlvLength = self.tlvHeaderDecode(newDataIn[:tlvHeaderLength])
+                    print(f"Received TLV type: {tlvType}, length: {tlvLength}")
                     if tlvType>10:
                         raise Exception('TLV index not valid') 
                 except Exception as e:
@@ -115,10 +188,39 @@ class TLVParser():
             return newDataIn
 
     def tlvHeaderDecode(self, data):
-        tlvType, tlvLength = struct.unpack('2I', data)
-        return tlvType, tlvLength
+        """
+        Decode the TLV header to extract type and length information.
+        
+        Args:
+            data (bytes): TLV header data
+            
+        Returns:
+            tuple: (tlvType, tlvLength)
+                - tlvType (int): Type of TLV
+                - tlvLength (int): Length of TLV data
+                
+        Raises:
+            Exception: If header decoding fails
+        """
+        # print("TLV header bytes (hex):", ' '.join(f"{byte:02x}" for byte in data[:8]))
+        try:
+            tlvType, tlvLength = struct.unpack('2I', data)
+            return tlvType, tlvLength
+        except Exception as e:
+            print(f"Error unpacking TLV header: {e}")
+            raise e
 
     def parseSDK3xPoints(self, dataIn, numObj):
+        """
+        Parse point cloud data from SDK 3.x format.
+        
+        Args:
+            dataIn (bytes): Raw point cloud data
+            numObj (int): Number of objects to parse
+            
+        The parsed data is stored in self.pcBufPing with format:
+        [x, y, z, snr] for each point
+        """
         pointStruct = '4f'
         pointLength = struct.calcsize(pointStruct)
         try:
@@ -131,6 +233,16 @@ class TLVParser():
             self.fail = 1
 
     def parseCapon3DPolar(self, data, tlvLength):
+        """
+        Parse 3D polar coordinate data using Capon algorithm.
+        
+        Args:
+            data (bytes): Raw polar coordinate data
+            tlvLength (int): Length of TLV data
+            
+        The parsed data is stored in self.pcPolar with format:
+        [range, azimuth, elevation, doppler, snr] for each point
+        """
         pUnitStruct = '5f'  #elev, azim, doppler, range, snr
         pUnitSize = struct.calcsize(pUnitStruct)
         pUnit = struct.unpack(pUnitStruct, data[:pUnitSize])
@@ -165,6 +277,13 @@ class TLVParser():
         self.polar2Cart3D()
 
     def polar2Cart3D(self):
+        """
+        Convert polar coordinates to Cartesian coordinates.
+        
+        Converts the data in self.pcPolar to Cartesian coordinates
+        and stores the result in self.pcBufPing with format:
+        [x, y, z, doppler, snr] for each point
+        """
         self.pcBufPing = np.empty((5,self.numDetectedObj))
         for n in range(0, self.numDetectedObj):
             self.pcBufPing[2,n] = self.pcPolar[0,n]*math.sin(self.pcPolar[2,n]) #z
@@ -175,6 +294,16 @@ class TLVParser():
 
 
     def parseDetectedTracksSDK3x(self, data, tlvLength):
+        """
+        Parse target tracking information from SDK 3.x format.
+        
+        Args:
+            data (bytes): Raw target tracking data
+            tlvLength (int): Length of TLV data
+            
+        The parsed data is stored in self.targetBufPing with format:
+        [tid, pos_x, pos_y, pos_z, vel_x, vel_y, vel_z, acc_x, acc_y, acc_z, ...]
+        """
         targetStruct = 'I27f'
         targetSize = struct.calcsize(targetStruct)
         self.numDetectedTarget = int(tlvLength/targetSize)
@@ -215,6 +344,14 @@ class TLVParser():
         self.targetBufPing = targets
 
     def parseTargetAssociations(self, data):
+        """
+        Parse target association data.
+        
+        Args:
+            data (bytes): Raw target association data
+            
+        The parsed data is stored in self.indexes and self.unique
+        """
         targetStruct = 'B'
         targetSize = struct.calcsize(targetStruct)
         numIndexes = int(len(data)/targetSize)

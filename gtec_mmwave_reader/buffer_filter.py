@@ -22,28 +22,53 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. """
 
-import rospy
+import rclpy
+from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2
 from std_msgs.msg import Header
 import sensor_msgs.point_cloud2 as pc2
 from math import floor
 
-class PointCloudProcessor:
+class PointCloudProcessor(Node):
+    """
+    A ROS 2 node that processes point cloud data by buffering and filtering based on a grid size.
+
+    Attributes:
+        input_topic (str): Topic name for input point cloud data.
+        output_topic (str): Topic name for output point cloud data.
+        grid_size (float): Size of the grid for filtering points.
+        new_points (list): List to store new points from the point cloud.
+        new_tiles_with_points (list): List to store tiles with points.
+    """
+
     def __init__(self, input_topic, output_topic, grid_size):
+        """
+        Initializes the PointCloudProcessor node, setting up subscriptions and publishers.
+
+        Args:
+            input_topic (str): Topic name for input point cloud data.
+            output_topic (str): Topic name for output point cloud data.
+            grid_size (float): Size of the grid for filtering points.
+        """
+        super().__init__('buffer_filter')
         self.input_topic = input_topic
         self.output_topic = output_topic
         self.grid_size = grid_size
         self.new_points = []
         self.new_tiles_with_points = []
 
-        rospy.Subscriber(self.input_topic, PointCloud2, self.point_cloud_callback)
-        self.publisher = rospy.Publisher(self.output_topic, PointCloud2, queue_size=10)
+        self.create_subscription(PointCloud2, self.input_topic, self.point_cloud_callback, 10)
+        self.publisher = self.create_publisher(PointCloud2, self.output_topic, 10)
 
     def point_cloud_callback(self, msg: PointCloud2) -> None:
+        """
+        Callback function to process incoming point cloud data.
 
+        Args:
+            msg (PointCloud2): Incoming point cloud message.
+        """
         for point in pc2.read_points(msg, field_names=("x", "y", "z"), skip_nans=True):
             self.new_points.append(point)
-
 
         points_to_publish = []
         for new_point in self.new_points:
@@ -70,26 +95,33 @@ class PointCloudProcessor:
             tile_y = floor(point[1] / self.grid_size)
             tile = (tile_x, tile_y)
             self.new_tiles_with_points.append(tile)
-            
-            
-        if len(points_to_publish)>0:
+
+        if len(points_to_publish) > 0:
             header = Header()
             header.stamp = msg.header.stamp
             header.frame_id = msg.header.frame_id
             pointcloud = pc2.create_cloud_xyz32(header, points_to_publish)
             self.publisher.publish(pointcloud)
-            
 
 
-def main():
-    rospy.init_node('BufferFilter')
+def main(args=None):
+    """
+    Main function to initialize and spin the PointCloudProcessor node.
 
-    input_topic = rospy.get_param('~input_topic', '/input_topic')
-    output_topic = rospy.get_param('~output_topic', '/output_topic')
-    grid_size = float(rospy.get_param('~grid_size', 1.0))
-    
+    Args:
+        args: Command line arguments passed to the node.
+    """
+    rclpy.init(args=args)
+
+    input_topic = '/input_topic'
+    output_topic = '/output_topic'
+    grid_size = 1.0
+
     processor = PointCloudProcessor(input_topic, output_topic, grid_size)
-    rospy.spin()
+    rclpy.spin(processor)
+
+    processor.destroy_node()
+    rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
